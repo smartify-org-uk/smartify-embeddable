@@ -38,7 +38,7 @@ cubes:
     
     - name: venue_id
       type: string
-      sql: case when (venue_id = "" or venue_id is null) then "Not linked venue" else venue_id end
+      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
       primaryKey: true
       shown: true
 
