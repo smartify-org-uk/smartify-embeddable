@@ -1,4 +1,3 @@
-import { DataResponse } from '@embeddable.com/core';
 import { useEmbeddableState } from '@embeddable.com/react';
 import React, {
   ReactNode,
@@ -10,30 +9,23 @@ import React, {
   useState,
 } from 'react';
 import { twMerge } from 'tailwind-merge';
-
-import Checkbox from '../../../icons/Checkbox';
-import CheckboxEmpty from '../../../icons/CheckboxEmpty';
-import Container from '../../Container';
-import Spinner from '../../Spinner';
-import { ChevronDown, ClearIcon } from '../../icons';
+import Checkbox from '../../icons/Checkbox';
+import CheckboxEmpty from '../../icons/CheckboxEmpty';
+import Container from '../Container';
+import { ChevronDown, ClearIcon } from '../icons';
+import { SelectorOption } from './Selector.types';
+import { selectorOptionIncludesSearch } from './Selector.utils';
 
 export type Props = {
   className?: string;
-  options: DataResponse;
+  minDropdownWidth?: number;
+  placeholder?: string;
+  defaultValue?: string[];
+  options: SelectorOption[];
+  title?: string;
   unclearable?: boolean;
   onChange: (v: string[]) => void;
-  searchProperty?: string;
-  minDropdownWidth?: number;
-  property?: { name: string; title: string; nativeType: string; __type__: string };
-  title?: string;
-  defaultValue?: string[];
-  placeholder?: string;
-  ds?: { embeddableId: string; datasetId: string; variableValues: Record };
 };
-
-type Record = { [p: string]: string };
-
-let debounce: number | undefined = undefined;
 
 export default (props: Props) => {
   const ref = useRef<HTMLInputElement | null>(null);
@@ -43,10 +35,6 @@ export default (props: Props) => {
   const [search, setSearch] = useState('');
   const [triggerBlur, setTriggerBlur] = useState(false);
   const [value, setValue] = useState(props.defaultValue);
-
-  const [_, setServerSearch] = useEmbeddableState({
-    [props.searchProperty || 'search']: '',
-  }) as [Record, (f: (m: Record) => Record) => void];
 
   useEffect(() => {
     setValue(props.defaultValue);
@@ -87,14 +75,8 @@ export default (props: Props) => {
   const performSearch = useCallback(
     (newSearch: string) => {
       setSearch(newSearch);
-
-      clearTimeout(debounce);
-
-      debounce = window.setTimeout(() => {
-        setServerSearch((s) => ({ ...s, [props.searchProperty || 'search']: newSearch }));
-      }, 500);
     },
-    [setSearch, setServerSearch, props.searchProperty],
+    [setSearch],
   );
 
   const set = useCallback(
@@ -114,8 +96,6 @@ export default (props: Props) => {
 
       props.onChange(newValues);
       setValue(newValues);
-      setServerSearch((s) => ({ ...s, [props.searchProperty || 'search']: '' }));
-      clearTimeout(debounce);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [performSearch, props, value],
@@ -138,19 +118,19 @@ export default (props: Props) => {
     }
   };
 
-  const list = useMemo(
-    () =>
-      props.options?.data?.reduce((memo, o, i: number) => {
-        memo.push(
+  const list = useMemo(() => {
+    return props.options
+      .filter((option) => selectorOptionIncludesSearch(search, option))
+      .map((option) => {
+        return (
           <div
-            key={i}
+            key={option.value}
+            role="button"
             onClick={() => {
-              setFocus(true);
-              set(o[props.property?.name || ''] || '');
+              setTriggerBlur(false);
+              set(option.value);
             }}
-            onKeyDown={(e) =>
-              handleKeyDownCallback(e, set(o[props.property?.name || ''] || ''), true)
-            }
+            onKeyDown={(e) => handleKeyDownCallback(e, set(option.value), true)}
             onFocus={() => {
               setIsDropdownOrItemFocused(true);
               setFocus(true);
@@ -158,34 +138,19 @@ export default (props: Props) => {
             onBlur={() => {
               setIsDropdownOrItemFocused(false);
             }}
-            className={`flex items-left items-center min-h-[36px] w-full px-3 py-2 hover:bg-black/5 cursor-pointer font-normal ${
-              value?.includes(o[props.property?.name || '']) ? 'bg-black/5' : ''
-            }`}
+            className={`flex items-left items-center min-h-[36px] px-3 py-2 hover:bg-black/5 cursor-pointer font-normal ${
+              value?.includes(option.value) ? 'bg-black/5' : ''
+            } truncate`}
             tabIndex={0}
           >
-            {value?.includes(o[props.property?.name || '']) ? (
-              <div className={`w-[16px] h-[16px] inline-block`}>
-                <Checkbox />
-              </div>
-            ) : (
-              <div className={`w-[16px] h-[16px] inline-block`}>
-                <CheckboxEmpty />
-              </div>
-            )}
-
-            <div className={`block w-full truncate`}>
-              {o[props.property?.name || '']}
-              {o.note && (
-                <span className="font-normal ml-auto pl-3 text-xs opacity-70">{o.note}</span>
-              )}
-            </div>
-          </div>,
+            {value?.includes(option.value) ? <Checkbox /> : <CheckboxEmpty />}
+            <span className="font-normal pl-1 truncate" title={option.label}>
+              {option.label}
+            </span>
+          </div>
         );
-
-        return memo;
-      }, []),
-    [props, value, set],
-  ) as ReactNode[];
+      });
+  }, [props, value, set, search]) as ReactNode[];
 
   return (
     <Container title={props.title}>
@@ -253,11 +218,7 @@ export default (props: Props) => {
           </div>
         )}
 
-        {props.options.isLoading ? (
-          <Spinner show className="absolute right-2 top-2 z-1 pointer-events-none" />
-        ) : (
-          <ChevronDown className="absolute right-2.5 top-2.5 z-1 pointer-events-none" />
-        )}
+        <ChevronDown className="absolute right-2.5 top-2.5 z-1 pointer-events-none" />
 
         {!props.unclearable && !!value && (
           <div
