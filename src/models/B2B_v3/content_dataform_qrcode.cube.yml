@@ -4,10 +4,12 @@ cubes:
   sql: >
     select
       event_date
+      ,case when device.mobile_brand_name = 'Smartify' then timestamp_seconds(event_params_custom.event_custom_timestamp) else timestamp_micros(time.event_timestamp) end as event_timestamp
       ,user_pseudo_id
       ,user_id
       ,event_name
       ,platform
+      ,device.mobile_brand_name
       ,device.category as device_category
       ,device.web_info.hostname as hostname
       ,geo.country as geo_country
@@ -26,20 +28,21 @@ cubes:
       and event_name = 'qrcode_open'
       and event_date >= '2024-07-01'
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+      and event_name != "view_component"
   
   dimensions:
     - name: event_date
       type: time
-      sql: timestamp(event_date)
+      sql: event_timestamp
 
     - name: device_platform
       type: string
       #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
-      sql: case when stream_id = "10374153553" then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+      sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
 
     - name: venue_id
       type: string
-      sql: case when (venue_id = "" or venue_id is null) then "Not linked venue" else venue_id end
+      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
       primaryKey: true
       shown: true
 

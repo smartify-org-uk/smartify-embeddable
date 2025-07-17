@@ -1,0 +1,21 @@
+cubes:
+- name: moi_notrack_audience
+  data_source: default
+  sql: >
+    select 
+      'true' as is_notrack
+      ,concat(user_pseudo_id, event_date) as user_concat
+    from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+    where event_date >= "2025-05-06"
+      and contains_substr(event_name, 'track')
+      and event_params_custom.organisation_id = 'org_museumofillusions'
+  
+  dimensions:
+    - name: user_concat
+      sql: user_concat
+      type: string
+      primaryKey: true
+    
+    - name: is_notrack
+      sql: is_notrack
+      type: string

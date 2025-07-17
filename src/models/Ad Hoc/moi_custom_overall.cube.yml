@@ -5,6 +5,7 @@ cubes:
     select
       event_date
       ,user_pseudo_id
+      ,concat(user_pseudo_id, event_date) as user_concat
       ,user_id
       ,is_active_user
       ,event_params.engagement_time_msec
@@ -56,6 +57,7 @@ cubes:
     where event_date >= '2025-05-09'
       and stream_id in ("1913717213")
       and event_params_custom.organisation_id = 'org_museumofillusions'
+      and event_name != "view_component"
   
   dimensions:
     - name: event_date
@@ -65,6 +67,12 @@ cubes:
     - name: device_language
       type: string
       sql: device_language
+    
+    - name: user_concat
+      type: string
+      sql: user_concat
+      primaryKey: true
+      shown: false
     
     - name: country
       type: string
@@ -82,7 +90,7 @@ cubes:
     
     - name: venue_id
       type: string
-      sql: case when (venue_id = "" or venue_id is null) then "Not linked venue" else venue_id end
+      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
       primaryKey: true
       shown: true
     
@@ -304,3 +312,8 @@ cubes:
       type: sum
       sql: case when event_name = 'qrcode_open' then 1 else 0 end
       title: "QR Code Opens"
+  
+  joins:
+    - name: moi_notrack_audience
+      relationship: many_to_one
+      sql: '{CUBE.user_concat} = {moi_notrack_audience.user_concat}'

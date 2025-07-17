@@ -4,12 +4,14 @@ cubes:
   sql: >
     with raw as (SELECT
       event_date
+      ,case when device.mobile_brand_name = 'Smartify' then timestamp_seconds(event_params_custom.event_custom_timestamp) else timestamp_micros(time.event_timestamp) end as event_timestamp
       ,user_pseudo_id
       ,user_id
       ,event_name
       ,platform
       ,device.category as device_category
       ,device.web_info.hostname as hostname
+      ,device.mobile_brand_name
       ,geo.country as geo_country
       ,geo.city as geo_city
       ,stream_id
@@ -35,17 +37,18 @@ cubes:
       or venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
     ) 
     and tour_id is not null
+    and event_name != "view_component"
     
 
   dimensions: 
     - name: event_date
       type: time
-      sql: timestamp(event_date)
+      sql: event_timestamp
 
     - name: device_platform
       type: string
       #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
-      sql: case when stream_id = "10374153553" then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+      sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
 
     - name: user_connectivity
       type: string

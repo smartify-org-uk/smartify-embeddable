@@ -4,6 +4,7 @@ cubes:
   sql: >
     select
       event_date
+      ,case when event_params_custom.event_custom_timestamp is not null then timestamp_seconds(event_params_custom.event_custom_timestamp) else timestamp_micros(time.event_timestamp) end as new_event_timestamp
       ,user_pseudo_id
       ,user_id
       ,is_active_user
@@ -12,6 +13,7 @@ cubes:
       ,event_name
       ,platform
       ,device.category as device_category
+      ,device.mobile_brand_name
       ,device.language as device_language
       ,device.web_info.hostname as hostname
       ,geo.country as geo_country
@@ -46,17 +48,30 @@ cubes:
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
       and event_date >= '2022-01-01'
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
-      --and event_params_custom.organisation_id is not null
+      and not (event_params_custom.event_custom_timestamp is not null and DATE(TIMESTAMP_SECONDS(event_params_custom.event_custom_timestamp)) = '2025-06-06' and stream_id = '1913717213' and device.mobile_brand_name =  'Smartify')
+
 
   dimensions:
     - name: event_date
       type: time
-      sql: timestamp(event_date)
+      sql: new_event_timestamp
 
     - name: device_platform
       type: string
       #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
-      sql: case when stream_id = "10374153553" then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+      sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+
+    - name: mobile_brand_name
+      type: string
+      sql: mobile_brand_name
+
+    - name: user_pseudo_id
+      type: string
+      sql: user_pseudo_id
+
+    - name: stream_id
+      type: string
+      sql: stream_id
 
     - name: user_connectivity
       type: string
@@ -96,7 +111,7 @@ cubes:
     
     - name: venue_id
       type: string
-      sql: case when (venue_id = "" or venue_id is null) then "Not linked venue" else venue_id end
+      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
       primaryKey: true
       shown: true
 
@@ -123,7 +138,7 @@ cubes:
     - name: active_user
       type: count_distinct_approx
       title: Total Users
-      sql: case when event_date <= "2023-07-18" and (engagement_time_msec > 0 or session_engaged = "1") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)  when is_active_user = true then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else null end
+      sql: case when event_name = "view_component" then null when event_date <= "2023-07-18" and (engagement_time_msec > 0 or session_engaged = "1") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)  when is_active_user = true then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else user_pseudo_id end
     
     - name: audience_reach
       type: count_distinct_approx
