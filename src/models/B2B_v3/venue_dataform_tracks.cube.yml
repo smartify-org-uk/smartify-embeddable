@@ -189,7 +189,7 @@ cubes:
       title: 'Avg User Listen Time'
       sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
 
-#Wayfinding Measures
+#Wayfinding Measuresssss
     - name: wayfinding_directions
       title: Directions
       type: sum
