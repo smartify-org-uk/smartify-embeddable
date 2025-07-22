@@ -189,7 +189,55 @@ cubes:
       title: 'Avg User Listen Time'
       sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
 
-    #Bespoek Tour Measures
+#Wayfinding Measures
+    - name: wayfinding_directions
+      title: Directions
+      type: sum
+      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then 1 else 0 end
+
+    - name: wayfinding_directions_users
+      title: Directions Users
+      type: count_distinct_approx
+      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+    
+    - name: wayfinding_route_current
+      title: Route Current Track
+      type: sum
+      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_current_track' then 1 else 0 end
+    
+    - name: wayfinding_route_next
+      title: Route Next Track
+      type: sum
+      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_next_track' then 1 else 0 end
+
+    - name: wayfinding_floor_plan
+      title: Floor Plan
+      type: sum
+      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'floor_plan' then 1 else 0 end
+    
+    - name: wayfinding_survey_votes
+      title: Wayfinding Survey Votes
+      type: sum
+      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') then 1 else 0 end
+    
+    - name: wayfinding_survey_positive
+      title: Wayfinding Survey Positive
+      type: sum
+      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') and Event Label = 'positive' then 1 else 0 end
+    
+    - name: wayfinding_survey_negative
+      title: Wayfinding Survey Negative
+      type: sum
+      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') and Event Label = 'negative' then 1 else 0 end
+
+    - name: wayfinding_survey_rating
+      title: Wayfinding Survey Rating
+      type: sum
+      sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_positive} / {wayfinding_survey_votes} end
+      meta:
+        suffix: " %"
+
+    #Bespoke Tour Measures
     - name: ptour_created
       title: Bespoke Tour Created
       type: count_distinct_approx
