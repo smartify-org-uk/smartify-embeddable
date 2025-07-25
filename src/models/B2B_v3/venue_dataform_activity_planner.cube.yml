@@ -1,0 +1,187 @@
+cubes:
+- name: venue_dataform_activity_planner
+  data_source: default
+  sql: >
+    select
+      event_date
+      ,case when device.mobile_brand_name = 'Smartify' then timestamp_seconds(event_params_custom.event_custom_timestamp) else timestamp_micros(time.event_timestamp) end as event_timestamp
+      ,event_params.engagement_time_msec
+      ,event_params.session_engaged
+      ,is_active_user
+      ,user_pseudo_id
+      ,user_id
+      ,event_name
+      ,platform
+      ,device.category as device_category
+      ,device.web_info.hostname as hostname
+      ,device.mobile_brand_name
+      ,geo.country as geo_country
+      ,geo.city as geo_city
+      ,stream_id
+      ,event_params_custom.client_connectivity
+      ,event_params_custom.component_type
+      ,event_params_custom.content_category
+      ,event_params_custom.page_type
+      ,event_params_custom.venue_id
+      ,event_params_custom.organisation_id
+      ,event_params_custom.object_id
+      ,event_params_custom.tour_id
+      ,event_params_custom.track_id
+      ,event_params_custom.exhibition_id
+      ,event_params_custom.artist_id
+      ,event_params_custom.zone_id
+      ,user_properties.user_age
+      ,user_properties.user_gender
+      ,event_params_custom.visit_id
+      ,PARSE_DATE('%d-%m-%Y', event_params_custom.visit_date) as visit_date
+      ,event_params_custom.visit_duration
+      ,event_params_custom.visit_family_friendly
+      ,event_params_custom.visit_special_assistant
+      ,event_params_custom.page_content_id
+      ,if(contains_substr(event_params_custom.page_content_id, 'usrvst_'), event_params_custom.page_content_id, null) as user_visit_id
+      ,event_params_custom.page_path
+      ,event_params_custom.event_label
+      ,device.language as device_language
+    from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+    where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
+    and ('{COMPILE_CONTEXT.securityContext.venue_id}' IS NULL
+        or '{COMPILE_CONTEXT.securityContext.venue_id}' = ''
+        or '{COMPILE_CONTEXT.securityContext.venue_id}' = 'undefined'
+        or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
+    )
+    and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
+    and event_date >= '2022-01-01'
+    and event_name != "view_component"
+    and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+
+  dimensions:
+    - name: event_date
+      type: time
+      sql: event_timestamp
+    
+    - name: device_platform
+      type: string
+      sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+
+    - name: user_connectivity
+      type: string
+      sql: case when (client_connectivity = '' or client_connectivity is null) then 'Unknown' when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi' else 'Cellular' end
+
+    - name: country
+      type: string
+      sql: if(geo_country = "", "Unknown", geo_country)
+
+    - name: city
+      type: string
+      sql: if(geo_city = "", "Unknown", geo_city)
+
+    - name: user_gender
+      type: string
+      sql: case when user_gender in ('Male', 'MALE', 'Man', 'Mand', 'Masculino', '男性', 'זכר', 'Männlich', 'Mann', 'Homme', 'Hombre') then 'Male' when user_gender in ('Female', 'Woman', 'Femme', 'Mujer', 'Vrouw', 'Weiblich', 'Frau', 'Feminino', '女性', 'Donna', 'Kvinde') then 'Female' when user_gender in ('Unspecified', 'Non spécifié', 'Sin especificar') then 'Unspecified' when user_gender in ('Other', 'Autre') then 'Other' else 'Unknown' end
+
+    - name: user_age_range
+      type: string
+      sql: case when cast(user_age as int) < 18 then "- 18" when cast(user_age as int) >= 18 and cast(user_age as int) < 25 then "18 - 24" when cast(user_age as int) >= 25 and cast(user_age as int) < 35 then "25 - 34" when cast(user_age as int) >= 35 and cast(user_age as int) < 45 then "35 - 44" when cast(user_age as int) >= 45 and cast(user_age as int) < 55 then "45 - 54" when cast(user_age as int) >= 55 and cast(user_age as int) < 65 then "55 - 64" when cast(user_age as int) >= 65 and cast(user_age as int) < 71 then "65 - 70" when cast(user_age as int) >= 71 then "71+" else 'Unknown' end
+
+    - name: device_language
+      type: string
+      sql: device_language
+      primaryKey: true
+      shown: false
+
+    - name: organisation_id
+      type: string
+      sql: organisation_id
+      primaryKey: true
+      shown: true
+    
+    - name: venue_id
+      type: string
+      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
+    
+    - name: content_category
+      type: string
+      sql: content_category
+
+    - name: content_id
+      type: string
+      sql: case when content_category = 'object' then object_id when content_category = 'tour' then tour_id when  contains_substr(content_category, 'track') then track_id when content_category = 'exhibition' then exhibition_id when content_category = 'artist' then artist_id when content_category = 'zone' then zone_id when content_category = 'venue' then venue_id when content_category = 'organisation_id' then organisation_id else null end
+
+    - name: visit_id
+      type: string
+      sql: visit_id
+    
+    - name: user_visit_id
+      type: string
+      sql: user_visit_id
+
+    - name: visit_date
+      type: time
+      sql: timestamp(visit_date)
+
+    - name: visit_duration
+      type: string
+      sql: visit_duration
+    
+    - name: visit_family_friendly
+      type: string
+      sql: visit_family_friendly
+    
+    - name: visit_special_assistant
+      type: string
+      sql: visit_special_assistant
+    
+    - name: event_label
+      type: string
+      sql: event_label
+
+  measures:
+    - name: visit_planner_view
+      type: sum
+      sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/planner' then 1 else 0 end
+    
+    - name: visit_interests_view
+      type: sum
+      sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/interests' then 1 else 0 end
+    
+    - name: visit_duration_view
+      type: sum
+      sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/duration' then 1 else 0 end
+    
+    - name: visit_views
+      type: sum
+      sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and contains_substr(page_path, '/userVisits/usrvst_') then 1 else 0 end
+
+    - name: visits_created
+      type: count_distinct_approx
+      sql: user_visit_id
+
+    - name: visit_users
+      type: count_distinct_approx
+      sql: user_id
+
+    - name: active_user
+      type: count_distinct_approx
+      title: Total Users
+      sql: case when event_name = "view_component" then null when event_date <= "2023-07-18" and (engagement_time_msec > 0 or session_engaged = "1") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)  when is_active_user = true then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else user_pseudo_id end
+
+    # Visit Page Metrics
+    - name: expand_group_card
+      type: sum
+      title: Expand
+      sql: case when event_name = 'expand_component' and component_type = 'activity_group_card' then 1 else 0 end
+    
+    - name: collapse_group_card
+      type: sum
+      title: Collapse
+      sql: case when event_name = 'collapse_component' and component_type = 'activity_group_card' then 1 else 0 end
+    
+    - name: select_card
+      type: sum
+      title: Open Content
+      sql: case when event_name = 'select_component' and component_type = 'activity_card' then 1 else 0 end
+    
+    - name: complete_content
+      type: sum
+      title: Complete
+      sql: case when event_name = 'complete_content' and component_type in ('activity_card', 'activity_group_card') then 1 else 0 end

@@ -123,7 +123,11 @@ cubes:
     - name: event_label
       type: string
       sql: event_label
-  
+
+    - name: wayfinding_survey_label
+      type: string
+      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label in ('negative', 'positive') then event_label else null end
+
   measures:
     - name: tour_views
       type: sum
@@ -189,24 +193,24 @@ cubes:
       title: 'Avg User Listen Time'
       sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
 
-#Wayfinding Measuresssss
+#Wayfinding Measures
     - name: wayfinding_directions
       title: Directions
       type: sum
       sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then 1 else 0 end
 
     - name: wayfinding_directions_users
-      title: Directions Users
+      title: Wayfinding Users
       type: count_distinct_approx
       sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
     
     - name: wayfinding_route_current
-      title: Route Current Track
+      title: Route to Current
       type: sum
       sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_current_track' then 1 else 0 end
     
     - name: wayfinding_route_next
-      title: Route Next Track
+      title: Route to Next
       type: sum
       sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_next_track' then 1 else 0 end
 
@@ -218,22 +222,39 @@ cubes:
     - name: wayfinding_survey_votes
       title: Wayfinding Survey Votes
       type: sum
-      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') then 1 else 0 end
+      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') then 1 else 0 end
     
     - name: wayfinding_survey_positive
       title: Wayfinding Survey Positive
       type: sum
-      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') and Event Label = 'positive' then 1 else 0 end
+      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label = 'positive' then 1 else 0 end
     
     - name: wayfinding_survey_negative
       title: Wayfinding Survey Negative
       type: sum
-      sql: case when event_name = 'click_icon' and Component Type = 'icon_feedback' and contains_text(Content Category, 'wayfinding') and Event Label = 'negative' then 1 else 0 end
+      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label = 'negative' then 1 else 0 end
 
     - name: wayfinding_survey_rating
-      title: Wayfinding Survey Rating
-      type: sum
-      sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_positive} / {wayfinding_survey_votes} end
+      title: Wayfinding Rating %
+      type: number
+      sql: "({wayfinding_survey_positive} / NULLIF({wayfinding_survey_votes}, 0) * 100)"
+      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_positive} / {wayfinding_survey_votes} end
+      meta:
+        suffix: " %"
+
+    - name: wayfinding_tour_user_share
+      title: User Share %
+      type: number
+      sql: "({wayfinding_directions_users} / NULLIF({tour_users}, 0) * 100)"
+      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_votes} / {tour_users} end
+      meta:
+        suffix: " %"
+
+    - name: wayfinding_track_user_share
+      title: Wayfinding Track %
+      type: number
+      sql: "({wayfinding_directions_users} / NULLIF({track_play_users}, 0) * 100)"
+      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_votes} / {tour_users} end
       meta:
         suffix: " %"
 
