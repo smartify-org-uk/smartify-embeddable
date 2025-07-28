@@ -278,3 +278,20 @@ h2 {
   /* Firefox 18- */
   text-overflow: ellipsis;
 }
+
+/* GitHub-style color scale for calendar heatmap */
+.react-calendar-heatmap .color-empty    { fill: #FEF7E1; }
+.react-calendar-heatmap .color-scale-1 { fill: #FDE8A9; }
+.react-calendar-heatmap .color-scale-2 { fill: #FBD86F; }
+.react-calendar-heatmap .color-scale-3 { fill: #FACB3D; }
+.react-calendar-heatmap .color-scale-4 { fill: #CB9A06; }
+
+.react-calendar-heatmap text {
+  font-size: 16px; /* Optional: makes labels a bit clearer */
+}
+
+.react-calendar-heatmap .react-calendar-heatmap-weekday-label {
+  /* Increase left margin for weekday labels */
+  transform: translateX(-12px); /* Tweak as needed */
+  text-anchor: end;             /* Right-align text */
+}
