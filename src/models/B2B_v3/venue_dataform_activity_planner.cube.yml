@@ -135,6 +135,12 @@ cubes:
       type: string
       sql: event_label
 
+    - name: zone_id
+      type: string
+      sql: zone_id
+      primaryKey: true
+      shown: true
+
   measures:
     - name: visit_planner_view
       type: sum
@@ -185,3 +191,12 @@ cubes:
       type: sum
       title: Complete
       sql: case when event_name = 'complete_content' and component_type in ('activity_card', 'activity_group_card') then 1 else 0 end
+  
+  joins:
+    - name: venue_lookup_zones
+      relationship: many_to_one
+      sql: '{CUBE.zone_id} = {venue_lookup_zones.zone_sid}'
+    
+    - name: venue_lookup_objects
+      relationship: many_to_one
+      sql: 'if(contains_substr({CUBE.content_id}, "ak_"), {CUBE.content_id} = {venue_lookup_objects.object_sid}, {CUBE.content_id} = {venue_lookup_objects.object_sid})'

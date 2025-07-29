@@ -1,0 +1,41 @@
+cubes:
+- name: venue_lookup_zones
+  data_source: default
+  sql: >
+    select 
+      zone_sid
+      ,zone_name
+      ,organisation_sid
+      ,venue_sid
+      ,zone_type
+      ,parent_zone
+      ,zone_level
+      ,zone_status
+    from `smartify-cc94e.smartify_lookup_tables.zone_lookup`
+
+  dimensions:
+    - name: zone_sid
+      type: string
+      sql: zone_sid
+      primaryKey: true
+      shown: false
+    
+    - name: zone_name
+      type: string
+      sql: zone_name
+    
+    - name: zone_type
+      type: string
+      sql: zone_type
+    
+    - name: zone_level
+      type: string
+      sql: zone_level
+
+    - name: parent_zone
+      type: string
+      sql: parent_zone
+    
+    - name: zone_status
+      type: string
+      sql: zone_status
