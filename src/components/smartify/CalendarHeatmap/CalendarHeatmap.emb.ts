@@ -59,11 +59,38 @@ export const meta = {
       category: 'Chart settings',
     },
     {
+      name: 'granularity',
+      type: 'granularity',
+      label: 'Granularity',
+      defaultValue: 'day',
+      category: 'Variables to configure',
+    },
+    {
       name: 'dps',
       type: 'number',
       label: 'Decimal Places',
       description: 'Number of decimal places for metric values',
       category: 'Formatting',
+    },
+    {
+      name: 'showLabels',
+      type: 'boolean',
+      label: 'Show Labels',
+      category: 'Chart settings',
+      defaultValue: false,
+    },
+    {
+      name: 'xAxisTitle',
+      type: 'string',
+      label: 'X-Axis Title',
+      category: 'Chart settings',
+    },
+    {
+      name: 'showLegend',
+      type: 'boolean',
+      label: 'Show Legend',
+      category: 'Chart settings',
+      defaultValue: true,
     },
     {
       name: 'enableDownloadAsCSV',
@@ -89,7 +116,12 @@ export default defineComponent(Component, meta, {
       ...inputs,
       results: loadData({
         from: inputs.ds,
-        dimensions: [inputs.date],
+        timeDimensions: [
+          {
+            dimension: inputs.date?.name,
+            granularity: inputs.granularity,
+          },
+        ],
         measures: [inputs.metric],
       }),
     };

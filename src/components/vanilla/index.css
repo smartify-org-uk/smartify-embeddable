@@ -280,11 +280,13 @@ h2 {
 }
 
 /* GitHub-style color scale for calendar heatmap */
-.react-calendar-heatmap .color-empty    { fill: #FEF7E1; }
-.react-calendar-heatmap .color-scale-1 { fill: #FDE8A9; }
-.react-calendar-heatmap .color-scale-2 { fill: #FBD86F; }
-.react-calendar-heatmap .color-scale-3 { fill: #FACB3D; }
-.react-calendar-heatmap .color-scale-4 { fill: #CB9A06; }
+.react-calendar-heatmap .color-empty    { fill: #0066CC; }
+.react-calendar-heatmap .color-scale-1 { fill: #73C67C; }
+.react-calendar-heatmap .color-scale-2 { fill: #8BB078; }
+.react-calendar-heatmap .color-scale-3 { fill: #A39B74; }
+.react-calendar-heatmap .color-scale-4 { fill: #BC8570; }
+.react-calendar-heatmap .color-scale-5 { fill: #D4706C; }
+.react-calendar-heatmap .color-scale-6 { fill: #EC5A68; }
 
 .react-calendar-heatmap text {
   font-size: 16px; /* Optional: makes labels a bit clearer */
