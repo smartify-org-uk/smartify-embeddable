@@ -20,6 +20,7 @@ cubes:
       ,geo.city as geo_city
       ,stream_id
       ,user_properties.user_age
+      ,user_properties.user_language
       ,user_properties.user_gender
       ,ifnull(user_properties.user_logged, "false") as user_logged
       ,event_params_custom.client_connectivity
@@ -82,6 +83,10 @@ cubes:
       sql: device_language
       primaryKey: true
       shown: false
+    
+    - name: user_language
+      type: string
+      sql: user_language
 
     - name: country
       type: string
