@@ -6,7 +6,6 @@ cubes:
       zone_sid
       ,zone_name
       ,organisation_sid
-      ,venue_sid
       ,zone_type
       ,parent_zone
       ,zone_level

@@ -10,6 +10,7 @@ cubes:
       ,event_name
       ,platform
       ,device.category as device_category
+      ,device.operating_system_version
       ,device.web_info.hostname as hostname
       ,device.mobile_brand_name
       ,geo.country as geo_country
@@ -59,6 +60,10 @@ cubes:
       type: string
       #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
       sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
+    
+    - name: device_mobile_os_version
+      type: string
+      sql: CONCAT(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+(\d+)'), ".", IFNULL(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+\d+\.(\d+)'), "0"))
 
     - name: user_connectivity
       type: string
@@ -137,6 +142,26 @@ cubes:
       type: count_distinct_approx
       sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
 
+    - name: track_play_5s
+      title: Track Plays 5s
+      type: sum
+      sql: case when event_date > "2025-06-11" and event_name in ('track_start_5s') then 1 when event_date <= "2025-06-11" and event_name in ('track_start') then 1 else 0 end
+      #sql: case when event_name in ('track_start_5s') then 1 else 0 end
+    
+    - name: track_pseudo_complete
+      title: Track Pseudo Completes
+      type: sum
+      sql: case when platform = 'WEB' and mobile_brand_name = 'Smartify' and event_name = 'track_complete' then 1 when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) <= 13 and event_name = 'track_complete' then 1  when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) > 13 and event_name = 'track_pseudo_complete' then 1 when (platform != 'ANDROID' and NOT (platform = 'WEB' and mobile_brand_name = 'Smartify')) and event_name = 'track_pseudo_complete' then 1 else 0 end
+      #v2_sql: case when event_date > "2025-04-04" and event_name in ('track_pseudo_complete') then 1 when event_date <= "2025-04-04" and event_name in ('track_complete') then 1 else 0 end
+      #v1_sql: case when event_name in ('track_pseudo_complete') then 1 else 0 end
+
+    - name: new_completion_rate
+      title: New Completion Rate %
+      type: number
+      sql: "({track_pseudo_complete} / NULLIF({track_play_5s}, 0) * 100)"
+      meta:
+        suffix: " %"
+    
     - name: track_plays
       title: Plays
       type: sum
@@ -205,17 +230,17 @@ cubes:
       sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
     
     - name: wayfinding_route_current
-      title: Route to Current
+      title: Route Current Stop
       type: sum
       sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_current_track' then 1 else 0 end
     
     - name: wayfinding_route_next
-      title: Route to Next
+      title: Route Next Stop
       type: sum
       sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_next_track' then 1 else 0 end
 
     - name: wayfinding_floor_plan
-      title: Floor Plan
+      title: View Map
       type: sum
       sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'floor_plan' then 1 else 0 end
     
@@ -251,7 +276,7 @@ cubes:
         suffix: " %"
 
     - name: wayfinding_track_user_share
-      title: Wayfinding Track %
+      title: Wayfinding User Share %
       type: number
       sql: "({wayfinding_directions_users} / NULLIF({track_play_users}, 0) * 100)"
       #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_votes} / {tour_users} end

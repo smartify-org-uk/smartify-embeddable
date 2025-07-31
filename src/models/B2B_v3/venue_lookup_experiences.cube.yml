@@ -7,7 +7,6 @@ cubes:
       ,experience_name
       ,experience_status
       ,organisation_sid
-      ,venue_sid
     from `smartify-cc94e.smartify_lookup_tables.experiences_lookup`
 
   dimensions:
