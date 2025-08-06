@@ -10,8 +10,8 @@ export default defineConfig({
   authDomain: 'auth.eu.embeddable.com',
   authClientId: '6OGPwIQsVmtrBKhNrwAaXhz4ePb0kBGV',
 
-  pushModels: false,
-  pushComponents: true,
+  pushModels: true,
+  pushComponents: false,
   
   //
   // For internal use only
