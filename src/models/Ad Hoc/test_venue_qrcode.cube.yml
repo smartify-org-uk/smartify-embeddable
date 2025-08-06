@@ -3,8 +3,7 @@ cubes:
   data_source: default
   sql: >
     select
-      event_timestamp
-      ,datetime(timestamp_micros(event_timestamp)) as event_datetime
+      datetime(timestamp_micros(event_timestamp)) as event_datetime
       ,event_name
       ,user_pseudo_id
       ,(select value.string_value from unnest(event_params) where key = "organization_id") as organization_id
@@ -31,7 +30,7 @@ cubes:
     and (select value.string_value from unnest(event_params) where key = "qrcode_id") = '{COMPILE_CONTEXT.securityContext.qrcode_id}'
     union all
     select
-      time.event_timestamp as event_datetime
+      datetime(timestamp_micros(time.event_timestamp)) as event_datetime
       ,event_name
       ,user_pseudo_id
       ,event_params_custom.organisation_id as organization_id
