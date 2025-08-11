@@ -33,7 +33,7 @@ cubes:
           or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
       )      
       and event_name in ("qrcode_open")
-      and event_date >= '2024-07-01'
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
 
   dimensions:

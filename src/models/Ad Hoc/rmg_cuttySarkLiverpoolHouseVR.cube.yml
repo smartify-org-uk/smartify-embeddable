@@ -22,7 +22,7 @@ cubes:
       ,page_location
       ,device.web_info.hostname as hostname
     from `smartify-cc94e.smartify_flat_analytics.smartify_ga_flat`
-    where partition_date >= "2024-01-01"
+    where partition_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
     and stream_id in ("1047860117","1047860114","1913717213","2817285551")
   
   dimensions:

@@ -47,7 +47,7 @@ cubes:
           or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
-      and event_date >= '2022-01-01'
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
       and not (event_params_custom.event_custom_timestamp is not null and DATE(TIMESTAMP_SECONDS(event_params_custom.event_custom_timestamp)) = '2025-06-06' and stream_id = '1913717213' and device.mobile_brand_name =  'Smartify')
 

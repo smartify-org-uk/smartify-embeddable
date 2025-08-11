@@ -18,7 +18,7 @@ cubes:
             else CAST(event_params_custom.track_listen_time_string AS NUMERIC)
           END) track_listen_time
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
-    where event_date between '2025-05-09' and '2025-05-26'
+    where event_date >= '2025-05-09'
       and stream_id in ("1913717213")
       and event_params_custom.organisation_id = 'org_museumofillusions'
       --and event_name = 'track_start'
