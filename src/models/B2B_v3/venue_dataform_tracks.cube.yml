@@ -11,6 +11,7 @@ cubes:
       ,platform
       ,device.category as device_category
       ,device.web_info.hostname as hostname
+      ,device.operating_system_version
       ,device.mobile_brand_name
       ,geo.country as geo_country
       ,geo.city as geo_city
@@ -42,7 +43,7 @@ cubes:
           or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
-      and event_date >= '2022-01-01'
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and event_name != "view_component"
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
       and (
@@ -123,6 +124,10 @@ cubes:
     - name: event_label
       type: string
       sql: event_label
+    
+    - name: device_mobile_os_version
+      type: string
+      sql: CONCAT(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+(\d+)'), ".", IFNULL(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+\d+\.(\d+)'), "0"))
 
     - name: wayfinding_survey_label
       type: string
@@ -135,7 +140,7 @@ cubes:
     
     - name: tour_users
       type: count_distinct_approx
-      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then user_pseudo_id else null end
 
     - name: track_plays
       title: Plays
@@ -149,11 +154,11 @@ cubes:
 
     - name: track_play_users
       type: count_distinct_approx
-      sql: case when event_name in ('track_start') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('track_start') then user_pseudo_id else null end
 
     - name: track_complete_users
       type: count_distinct_approx
-      sql: case when event_name in ('track_complete') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('track_complete') then user_pseudo_id else null end
 
     - name: track_play_per_user
       type: number
@@ -169,6 +174,23 @@ cubes:
       title: Completion Rate %
       type: number
       sql: "({track_complete} / NULLIF({track_plays}, 0) * 100)"
+      meta:
+        suffix: " %"
+    
+    - name: track_play_5s
+      title: Track Plays 5s
+      type: sum
+      sql: case when event_date > "2025-06-11" and event_name in ('track_start_5s') then 1 when event_date <= "2025-06-11" and event_name in ('track_start') then 1 else 0 end
+    
+    - name: track_pseudo_complete
+      title: Track Pseudo Completes
+      type: sum
+      sql: case when platform = 'WEB' and mobile_brand_name = 'Smartify' and event_name = 'track_complete' then 1 when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) <= 13 and event_name = 'track_complete' then 1  when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) > 13 and event_name = 'track_pseudo_complete' then 1 when (platform != 'ANDROID' and NOT (platform = 'WEB' and mobile_brand_name = 'Smartify')) and event_name = 'track_pseudo_complete' then 1 else 0 end
+    
+    - name: new_completion_rate
+      title: New Completion Rate %
+      type: number
+      sql: "({track_pseudo_complete} / NULLIF({track_play_5s}, 0) * 100)"
       meta:
         suffix: " %"
 
@@ -202,7 +224,7 @@ cubes:
     - name: wayfinding_directions_users
       title: Wayfinding Users
       type: count_distinct_approx
-      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then user_pseudo_id else null end
     
     - name: wayfinding_route_current
       title: Route to Current
@@ -267,7 +289,7 @@ cubes:
     - name: ptour_users
       title: Bespoke Tour Users
       type: count_distinct_approx
-      sql: case when STARTS_WITH(tour_id,"ptour_") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when STARTS_WITH(tour_id,"ptour_") then user_pseudo_id else null end
 
     - name: ptour_views
       title: Bespoke Tour Views

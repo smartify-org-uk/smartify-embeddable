@@ -52,7 +52,7 @@ cubes:
       ,device.category as device_category
       ,device.operating_system as device_operating_system
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
-    where event_date >= "2024-08-19"
+    where event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
     and event_params_custom.qrcode_id = '{COMPILE_CONTEXT.securityContext.qrcode_id}'
     and event_name = 'qrcode_open'
 

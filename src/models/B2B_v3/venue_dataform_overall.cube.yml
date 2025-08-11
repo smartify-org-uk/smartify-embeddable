@@ -47,7 +47,7 @@ cubes:
           or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
-      and event_date >= '2022-01-01'
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
       and not (event_params_custom.event_custom_timestamp is not null and DATE(TIMESTAMP_SECONDS(event_params_custom.event_custom_timestamp)) = '2025-06-06' and stream_id = '1913717213' and device.mobile_brand_name =  'Smartify')
 
@@ -143,11 +143,11 @@ cubes:
     - name: active_user
       type: count_distinct_approx
       title: Total Users
-      sql: case when event_name = "view_component" then null when event_date <= "2023-07-18" and (engagement_time_msec > 0 or session_engaged = "1") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)  when is_active_user = true then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else user_pseudo_id end
+      sql: case when is_active_user = true then user_pseudo_id when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else user_pseudo_id end
     
     - name: audience_reach
       type: count_distinct_approx
-      sql: if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)
+      sql: user_pseudo_id
 
     - name: login_users
       type: count_distinct_approx
@@ -171,7 +171,7 @@ cubes:
     - name: object_views_users
       type: count_distinct_approx
       title: Object View Users
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "object_dp") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "object_dp") and object_id is not null then user_pseudo_id else null end
 
     - name: object_views_per_user
       title: Objectect View / User
@@ -185,7 +185,7 @@ cubes:
     - name: object_scans_users
       type: count_distinct_approx
       title: Object Scan Users
-      sql: case when event_name in ("scan_recognition_hit") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when (event_name = "object_scan" and event_date <= "2023-05-05") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when (event_name = "artwork_recognised" and event_date <= "2022-11-11") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ("scan_recognition_hit") and object_id is not null then user_pseudo_id when (event_name = "object_scan" and event_date <= "2023-05-05") and object_id is not null then user_pseudo_id when (event_name = "artwork_recognised" and event_date <= "2022-11-11") and object_id is not null then user_pseudo_id else null end
 
     - name: object_scans_per_user
       title: Objectect Scan / User
@@ -220,7 +220,7 @@ cubes:
     - name: tour_view_users
       type: count_distinct_approx
       title: Tour View Users
-      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then user_pseudo_id else null end
 
     - name: tour_views_per_user
       title: Tour View / User
@@ -234,7 +234,7 @@ cubes:
     - name: track_play_users
       type: count_distinct_approx
       title: Track Play Users
-      sql: case when event_name in ('track_start') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('track_start') then user_pseudo_id else null end
 
     - name: track_plays_per_user
       title: Track Play / User

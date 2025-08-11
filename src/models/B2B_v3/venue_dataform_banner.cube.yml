@@ -118,7 +118,7 @@ cubes:
     - name: active_users
       type: count_distinct_approx
       title: "Total Users"
-      sql: if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)
+      sql: user_pseudo_id
 
     - name: banner_impressions
       type: sum

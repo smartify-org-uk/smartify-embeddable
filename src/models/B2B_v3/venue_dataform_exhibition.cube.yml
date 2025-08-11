@@ -32,7 +32,7 @@ cubes:
           or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
-      and event_date >= '2022-01-01'
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
       and event_params_custom.exhibition_id is not null
       and event_name != "view_component"
@@ -72,7 +72,7 @@ cubes:
     - name: exhibition_users
       type: count_distinct_approx
       title: 'Users'
-      sql:  case when event_name in ('screen_view', 'page_view') and contains_substr(page_type, 'exhibition_dp') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql:  case when event_name in ('screen_view', 'page_view') and contains_substr(page_type, 'exhibition_dp') then user_pseudo_id else null end
 
     - name: exhibition_views
       type: sum

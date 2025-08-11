@@ -23,7 +23,7 @@ cubes:
       ,"Experience Page Funnel" as beacon_funnel
       ,event_params.firebase_screen_class
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
-    where event_date >= "2024-05-22"
+    where event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
     and stream_id in ("1047860117","1047860114")
   
   dimensions:
