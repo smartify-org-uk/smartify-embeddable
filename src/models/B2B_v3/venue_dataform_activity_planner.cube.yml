@@ -169,7 +169,7 @@ cubes:
     - name: active_user
       type: count_distinct_approx
       title: Total Users
-      sql: case when event_name = "view_component" then null when event_date <= "2023-07-18" and (engagement_time_msec > 0 or session_engaged = "1") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id)  when is_active_user = true then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered") then null else user_pseudo_id end
+      sql: user_pseudo_id
 
     # Visit Page Metrics
     - name: expand_group_card

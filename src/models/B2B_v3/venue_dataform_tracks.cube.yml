@@ -140,7 +140,7 @@ cubes:
     
     - name: tour_users
       type: count_distinct_approx
-      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then user_pseudo_id else null end
 
     - name: track_plays
       title: Plays
@@ -154,11 +154,11 @@ cubes:
 
     - name: track_play_users
       type: count_distinct_approx
-      sql: case when event_name in ('track_start') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('track_start') then user_pseudo_id else null end
 
     - name: track_complete_users
       type: count_distinct_approx
-      sql: case when event_name in ('track_complete') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name in ('track_complete') then user_pseudo_id else null end
 
     - name: track_play_per_user
       type: number
@@ -224,7 +224,7 @@ cubes:
     - name: wayfinding_directions_users
       title: Wayfinding Users
       type: count_distinct_approx
-      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then user_pseudo_id else null end
     
     - name: wayfinding_route_current
       title: Route to Current
@@ -289,7 +289,7 @@ cubes:
     - name: ptour_users
       title: Bespoke Tour Users
       type: count_distinct_approx
-      sql: case when STARTS_WITH(tour_id,"ptour_") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      sql: case when STARTS_WITH(tour_id,"ptour_") then user_pseudo_id else null end
 
     - name: ptour_views
       title: Bespoke Tour Views
