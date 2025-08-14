@@ -1,0 +1,24 @@
+cubes:
+- name: hrp_vr360_lookup
+  data_source: default
+  sql: |-
+      select
+        distinct event_params_custom.scene_id
+        ,event_params_custom.scene_name
+      from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+      where event_date >= '2025-07-01'
+      and page.hostname = 'ar.smartify.org'
+      and event_name in ('click_info','move_scene','click_header','track_start')
+      and event_params_custom.scene_name is not null
+      and event_params_custom.scene_id is not null
+
+  dimensions:
+    - name: scene_id
+      type: string
+      sql: scene_id
+      primaryKey: true
+      shown: false
+
+    - name: scene_name
+      type: string
+      sql: scene_name

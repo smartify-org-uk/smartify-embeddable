@@ -20,7 +20,11 @@ cubes:
       ,event_params_custom.component_type
       ,event_params_custom.content_category
       ,event_params_custom.page_type
-      ,event_params_custom.venue_id
+      ,case
+        when event_params_custom.tour_id in ('tour_ky7qSGsnEM7jURYhFN7t','tour_Q28QfnCHK1X3np6D0Qaz','tour_e1aHNylJHOuaYj6KlyZh','tour_Kpbx9TYFTFe9jB8Kj0FM') then 'venue_miaqa'
+        when event_params_custom.tour_id in ('tour_bBaHYuaqCReuevFIcD1L','tour_rFwk4w4BU6OxCozZIT6H') then 'venue_qpa'
+        else event_params_custom.venue_id
+      end as venue_id
       ,event_params_custom.organisation_id
       ,user_properties.user_age
       ,user_properties.user_gender

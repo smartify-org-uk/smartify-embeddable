@@ -1,0 +1,83 @@
+cubes:
+- name: hrp_vr360_experiences
+  data_source: default
+  sql: |-
+      select
+      event_date
+      ,timestamp_micros(time.event_timestamp) as event_timestamp
+      ,user_pseudo_id
+      ,is_active_user
+      ,event_name
+      ,platform
+      ,device.category as device_category
+      ,page.hostname
+      ,page.path as page_path
+      ,geo.country as geo_country
+      ,stream_id
+      ,event_params_custom.track_id
+      ,event_params_custom.scene_id
+      ,event_params_custom.vr_experience_id
+      from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+      where event_date >= '2025-07-01'
+      and page.hostname = 'ar.smartify.org'
+      and event_name in ('page_view','click_info','scroll','move_scene','click_header','session_start','first_visit','track_start')
+
+  dimensions:
+    - name: event_date
+      type: time
+      sql: event_timestamp
+    
+    - name: stream_id
+      type: string
+      sql: stream_id
+    
+    - name: vr360_id
+      type: string
+      sql: "IF(CONTAINS_SUBSTR(page_path, \"hrp-360\"), REGEXP_EXTRACT(page_path,\
+          \ r\"/hrp-360/([^/]+)/index\\.html\"), NULL)"
+    
+    - name: event_name
+      type: string
+      sql: event_name
+    
+    - name: country
+      type: string
+      sql: geo_country
+    
+    - name: scene_id
+      type: string
+      sql: scene_id
+      primaryKey: true
+      shown: true
+    
+    - name: vr_experience_id
+      type: string
+      sql: vr_experience_id
+
+  measures:
+    - name: total_users
+      type: count_distinct
+      sql: user_pseudo_id
+
+    - name: move_scene
+      type: count
+      sql: event_name
+      filters:
+        - sql: "(event_name = 'move_scene')"
+    
+    - name: click_info
+      type: count
+      sql: event_name
+      filters:
+        - sql: "(event_name = 'click_info')"
+    
+    - name: track_play
+      type: count
+      sql: event_name
+      filters:
+        - sql: "(event_name = 'track_start')"
+  
+  joins:
+   - name: hrp_vr360_lookup
+     relationship: many_to_one
+     sql: '{CUBE.scene_id} = {hrp_vr360_lookup.scene_id}'
