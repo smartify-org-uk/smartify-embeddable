@@ -1,0 +1,35 @@
+cubes:
+  - name: venue_lookup_infopages
+    sql: |-
+      select
+        info_id
+        ,pretty_id
+        ,organisation_id
+        ,venue_id
+        ,info_status
+        ,info_name
+      from `smartify-cc94e.smartify_lookup_tables.info_pages_lookup`
+    
+    dimensions:
+      - name: info_id
+        type: string
+        sql: info_id
+        primaryKey: true
+        shown: false
+      - name: pretty_id
+        type: string
+        sql: pretty_id
+      - name: organisation_id
+        type: string
+        sql: organisation_id
+        shown: false
+      - name: venue_id
+        type: string
+        sql: venue_id
+        shown: false
+      - name: info_status
+        type: string
+        sql: info_status
+      - name: info_name
+        type: string
+        sql: info_name
