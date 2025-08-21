@@ -1,0 +1,17 @@
+cubes:
+  - name: venue_lookup_timeline_period_item
+    sql: |-
+      select
+        milestoneitem_id
+        ,milestoneitem_name
+      from `smartify-cc94e.smartify_lookup_tables.milestone_item_lookup`
+    
+    dimensions:
+      - name: timeline_event_id
+        type: string
+        sql: milestoneitem_id
+        shown: false
+        primaryKey: true
+      - name: timeline_event_name
+        type: string
+        sql: milestoneitem_name

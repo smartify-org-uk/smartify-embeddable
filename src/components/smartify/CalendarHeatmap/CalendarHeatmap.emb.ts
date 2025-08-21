@@ -6,7 +6,7 @@ export const meta = {
   name: 'CalendarHeatmap',
   label: 'Calendar Heatmap',
   classNames: ['inside-card'],
-  category: 'Charts: essentials',
+  category: 'Smartify: Score Cards',
   inputs: [
     {
       name: 'ds',

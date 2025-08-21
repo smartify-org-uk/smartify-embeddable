@@ -1,0 +1,21 @@
+cubes:
+  - name: venue_lookup_timeline
+    sql: |-
+      select
+        timeline_id
+        ,timeline_name
+        ,timeline_status
+      from `smartify-cc94e.smartify_lookup_tables.timeline_lookup`
+    
+    dimensions:
+      - name: timeline_id
+        type: string
+        sql: timeline_id
+        primaryKey: true
+        shown: false
+      - name: timeline_name
+        type: string
+        sql: timeline_name
+      - name: timeline_status
+        type: string
+        sql: timeline_status
