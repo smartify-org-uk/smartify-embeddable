@@ -56,7 +56,7 @@ cubes:
           when stream_id = '1047860117' then 'iOS'
           when stream_id = '1047860114' then 'Android'
           when (stream_id = '1913717213' and device_category in ('tablet','desktop')) then 'Desktop'
-          when (stream_id = '10374153553' or (stream_id = '1913717213' and is_measurement_protocol_hit = true)) then 'Hardware'
+          when (stream_id = '10374153553' or (stream_id = '1913717213' and event_custom_timestamp is not null)) then 'Hardware'
           else 'Webapp'
         end
 

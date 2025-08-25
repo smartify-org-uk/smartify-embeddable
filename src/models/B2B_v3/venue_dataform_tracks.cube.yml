@@ -4,18 +4,13 @@ cubes:
   sql: >
     select
       event_date
-      ,case 
-        when is_measurement_protocol_hit = true then timestamp_seconds(event_params_custom.event_custom_timestamp) 
-        else timestamp_micros(time.event_timestamp)
-      end as event_timestamp
+      ,event_params_custom.event_custom_timestamp
+      ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
       ,user_pseudo_id
       ,event_name
       ,stream_id
-      ,is_measurement_protocol_hit
       ,device.category as device_category
-      ,device.operating_system_version
       ,geo.country
-      
       ,event_params_custom.client_connectivity
       ,event_params_custom.component_type
       ,event_params_custom.content_category
@@ -75,7 +70,7 @@ cubes:
           when stream_id = '1047860117' then 'iOS'
           when stream_id = '1047860114' then 'Android'
           when (stream_id = '1913717213' and device_category in ('tablet','desktop')) then 'Desktop'
-          when (stream_id = '10374153553' or (stream_id = '1913717213' and is_measurement_protocol_hit = true)) then 'Hardware'
+          when (stream_id = '10374153553' or (stream_id = '1913717213' and event_custom_timestamp is not null)) then 'Hardware'
           else 'Webapp'
         end
 
@@ -156,9 +151,9 @@ cubes:
       type: string
       sql: event_label
     
-    - name: device_mobile_os_version
-      type: string
-      sql: CONCAT(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+(\d+)'), '.', IFNULL(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+\d+\.(\d+)'), '0'))
+    # - name: app_version_num
+    #   type: number
+    #   sql: REGEXP_REPLACE(CONCAT(REGEXP_EXTRACT(app_info.version, r'^\s*(\d+)'),IFNULL(CONCAT('.',REGEXP_REPLACE(REGEXP_EXTRACT(app_info.version, r'^\s*\d+\.(\d[\d\.]*)'), r'\.','')),'')),r'^(\d+)\.0+$', r'\1.0')
 
     - name: wayfinding_survey_label
       type: string
@@ -219,22 +214,44 @@ cubes:
       filters:
         - sql: |-
             (
-              ( stream_id = '1913717213'
-              AND is_measurement_protocol_hit = true
-              AND event_name = 'track_complete' )
-            OR
-              ( stream_id = '1047860114'
-              AND SAFE_CAST({device_mobile_os_version} AS INT64) <= 13
-              AND event_name = 'track_complete' )
-            OR
-              ( stream_id = '1047860114'
-              AND SAFE_CAST({device_mobile_os_version} AS INT64) > 13
-              AND event_name = 'track_pseudo_complete' )
-            OR
-              ( stream_id <> '1047860114'
-              AND NOT ( stream_id = '1913717213' AND is_measurement_protocol_hit = true )
-              AND event_name = 'track_pseudo_complete' )
+              (event_date < DATE '2025-06-04' AND event_name = 'track_complete')
+              OR
+              (
+                event_date >= DATE '2025-06-04'
+                AND (
+                  stream_id IN ('1047860117','10374153553')
+                  OR (stream_id = '1913717213' AND event_custom_timestamp IS NOT NULL)
+                )
+                AND event_name = 'track_complete'
+              )
+              OR
+              (
+                event_date >= DATE '2025-06-04'
+                AND (
+                  stream_id IN ('1047860114')
+                  OR (stream_id = '1913717213' AND event_custom_timestamp IS NULL)
+                )
+                AND event_name = 'track_pseudo_complete'
+              )
             )
+        # - sql: |-
+        #     (
+        #       ( stream_id = '1913717213'
+        #       AND event_custom_timestamp is not null
+        #       AND event_name = 'track_complete' )
+        #     OR
+        #       ( stream_id = '1047860114'
+        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) <= 13
+        #       AND event_name = 'track_complete' )
+        #     OR
+        #       ( stream_id = '1047860114'
+        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) > 13
+        #       AND event_name = 'track_pseudo_complete' )
+        #     OR
+        #       ( stream_id <> '1047860114'
+        #       AND NOT ( stream_id = '1913717213' AND event_custom_timestamp is not null )
+        #       AND event_name = 'track_pseudo_complete' )
+        #     )
 
     - name: completion_rate
       title: Completion Rate %
