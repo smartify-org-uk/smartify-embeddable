@@ -4,18 +4,13 @@ cubes:
   sql: >
     select
       event_date
-      ,case when device.mobile_brand_name = 'Smartify' then timestamp_seconds(event_params_custom.event_custom_timestamp) else timestamp_micros(time.event_timestamp) end as event_timestamp
+      ,event_params_custom.event_custom_timestamp
+      ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
       ,user_pseudo_id
-      ,user_id
       ,event_name
-      ,platform
-      ,device.category as device_category
-      ,device.web_info.hostname as hostname
-      ,device.operating_system_version
-      ,device.mobile_brand_name
-      ,geo.country as geo_country
-      ,geo.city as geo_city
       ,stream_id
+      ,device.category as device_category
+      ,geo.country
       ,event_params_custom.client_connectivity
       ,event_params_custom.component_type
       ,event_params_custom.content_category
@@ -26,18 +21,16 @@ cubes:
         else event_params_custom.venue_id
       end as venue_id
       ,event_params_custom.organisation_id
-      ,user_properties.user_age
+      ,safe_cast(user_properties.user_age as int64) as user_age
       ,user_properties.user_gender
       ,event_params_custom.tour_id
       ,event_params_custom.track_id
       ,event_params_custom.audio_language
-      ,event_params_custom.page_path
       ,event_params_custom.event_label
       ,case
         when event_params_custom.track_listen_time_string = 'inf' then 0
         else CAST(event_params_custom.track_listen_time_string AS NUMERIC)
       END AS track_listen_time
-      ,event_params_custom.track_media_type
       ,device.language as device_language
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
     where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
@@ -48,42 +41,68 @@ cubes:
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
       and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
-      and event_name != "view_component"
-      and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+      --and event_name != 'view_component'
+      and event_name in ('add_favorite','click_button','click_icon','click_link','Explore_Tour','external_purchase','first_visit','inapp_click','numpad_recognition_hit','page_view','play_track_by_deeplink','qrcode_open','remove_favorite','scan_recognition_hit','screen_view','select_component','session_start','share','tour_details','tour_download_complete','tour_download_start','track_backward','track_complete','track_forward','track_pause','track_pseudo_complete','track_quartile_25','track_quartile_50','track_quartile_75','track_resume','track_start','track_start_5s','track_stop','translate_text')
+      and stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553')
       and (
         event_params_custom.track_id is not null or 
         event_params_custom.tour_id is not null
         )
       
   dimensions:
-    - name: event_date
+    - name: datetime
       type: time
       sql: event_timestamp
 
-    - name: device_platform
-      type: string
-      #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
-      sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
-
     - name: user_connectivity
       type: string
-      sql: case when (client_connectivity = '' or client_connectivity is null) then 'Unknown' when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi' else 'Cellular' end
+      sql: |-
+        case
+          when (client_connectivity = '' or client_connectivity is null) then 'Unknown'
+          when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi'
+          else 'Cellular'
+        end
+      
+    - name: device_platform
+      type: string
+      sql: |-
+        case
+          when stream_id = '1047860117' then 'iOS'
+          when stream_id = '1047860114' then 'Android'
+          when (stream_id = '1913717213' and device_category in ('tablet','desktop')) then 'Desktop'
+          when (stream_id = '10374153553' or (stream_id = '1913717213' and event_custom_timestamp is not null)) then 'Hardware'
+          else 'Webapp'
+        end
 
     - name: country
       type: string
-      sql: if(geo_country = "", "Unknown", geo_country)
-
-    - name: city
-      type: string
-      sql: if(geo_city = "", "Unknown", geo_city)
+      sql: if(country = '', 'Unknown', country)
 
     - name: user_gender
       type: string
-      sql: case when user_gender in ('Male', 'MALE', 'Man', 'Mand', 'Masculino', '男性', 'זכר', 'Männlich', 'Mann', 'Homme', 'Hombre') then 'Male' when user_gender in ('Female', 'Woman', 'Femme', 'Mujer', 'Vrouw', 'Weiblich', 'Frau', 'Feminino', '女性', 'Donna', 'Kvinde') then 'Female' when user_gender in ('Unspecified', 'Non spécifié', 'Sin especificar') then 'Unspecified' when user_gender in ('Other', 'Autre') then 'Other' else 'Unknown' end
+      sql: |-
+        case 
+          when user_gender in ('Male', 'MALE', 'Man', 'Mand', 'Masculino', '男性', 'זכר', 'Männlich', 'Mann', 'Homme', 'Hombre') then 'Male' 
+          when user_gender in ('Female', 'Woman', 'Femme', 'Mujer', 'Vrouw', 'Weiblich', 'Frau', 'Feminino', '女性', 'Donna', 'Kvinde') then 'Female' 
+          when user_gender in ('Unspecified', 'Non spécifié', 'Sin especificar') then 'Unspecified' 
+          when user_gender in ('Other', 'Autre') then 'Other'
+          else 'Unknown'
+        end
 
     - name: user_age_range
       type: string
-      sql: case when cast(user_age as int) < 18 then "- 18" when cast(user_age as int) >= 18 and cast(user_age as int) < 25 then "18 - 24" when cast(user_age as int) >= 25 and cast(user_age as int) < 35 then "25 - 34" when cast(user_age as int) >= 35 and cast(user_age as int) < 45 then "35 - 44" when cast(user_age as int) >= 45 and cast(user_age as int) < 55 then "45 - 54" when cast(user_age as int) >= 55 and cast(user_age as int) < 65 then "55 - 64" when cast(user_age as int) >= 65 and cast(user_age as int) < 71 then "65 - 70" when cast(user_age as int) >= 71 then "71+" else 'Unknown' end
+      sql: |-
+        case
+          when user_age < 18 then '- 18'
+          when user_age >= 18 and user_age < 25 then '18 - 24'
+          when user_age >= 25 and user_age < 35 then '25 - 34'
+          when user_age >= 35 and user_age < 45 then '35 - 44'
+          when user_age >= 45 and user_age < 55 then '45 - 54'
+          when user_age >= 55 and user_age < 65 then '55 - 64'
+          when user_age >= 65 and user_age < 71 then '65 - 70'
+          when user_age >= 71 then '71+' 
+          else 'Unknown'
+        end
 
     - name: device_language
       type: string
@@ -94,12 +113,10 @@ cubes:
     - name: organisation_id
       type: string
       sql: organisation_id
-      primaryKey: true
-      shown: true
     
     - name: venue_id
       type: string
-      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
+      sql: case when (venue_id = '' or venue_id is null) then 'No linked venue' else venue_id end
 
     - name: tour_id
       type: string
@@ -109,7 +126,12 @@ cubes:
 
     - name: tour_type
       type: string
-      sql: case when STARTS_WITH(tour_id,"ptour_") then "Bespoke Tours" when STARTS_WITH(tour_id,"tour_") then "Venue Tours" else null end
+      sql: |-
+        case 
+          when STARTS_WITH(tour_id,'ptour_') then 'Bespoke Tours' 
+          when STARTS_WITH(tour_id,'tour_') then 'Venue Tours' 
+          else null
+        end
     
     - name: track_id
       type: string
@@ -129,85 +151,120 @@ cubes:
       type: string
       sql: event_label
     
-    - name: device_mobile_os_version
-      type: string
-      sql: CONCAT(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+(\d+)'), ".", IFNULL(REGEXP_EXTRACT(operating_system_version, r'^(?:Android|iOS)\s+\d+\.(\d+)'), "0"))
+    # - name: app_version_num
+    #   type: number
+    #   sql: REGEXP_REPLACE(CONCAT(REGEXP_EXTRACT(app_info.version, r'^\s*(\d+)'),IFNULL(CONCAT('.',REGEXP_REPLACE(REGEXP_EXTRACT(app_info.version, r'^\s*\d+\.(\d[\d\.]*)'), r'\.','')),'')),r'^(\d+)\.0+$', r'\1.0')
 
     - name: wayfinding_survey_label
       type: string
-      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label in ('negative', 'positive') then event_label else null end
+      sql: |-
+        case 
+          when 
+            event_name = 'click_icon'
+            and component_type = 'icon_feedback'
+            and contains_substr(content_category, 'wayfinding') 
+            and event_label in ('negative', 'positive')
+          then event_label 
+          else null
+        end
 
   measures:
     - name: tour_views
-      type: sum
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name in ('page_view', 'screen_view')
+        - sql: contains_substr(page_type, 'tour_dp')
     
     - name: tour_users
       type: count_distinct_approx
-      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then user_pseudo_id else null end
+      sql: user_pseudo_id
+      filters:
+        - sql: event_name in ('page_view', 'screen_view', 'track_start')
+        - sql: tour_id is not null
 
     - name: track_plays
       title: Plays
-      type: sum
-      sql: case when event_name in ('track_start') then 1 else 0 end
-
-    - name: track_complete
-      title: Completes
-      type: sum
-      sql: case when event_name in ('track_complete') then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name in ('track_start')
 
     - name: track_play_users
       type: count_distinct_approx
-      sql: case when event_name in ('track_start') then user_pseudo_id else null end
-
-    - name: track_complete_users
-      type: count_distinct_approx
-      sql: case when event_name in ('track_complete') then user_pseudo_id else null end
+      sql: user_pseudo_id
+      filters:
+        - sql: event_name in ('track_start')
 
     - name: track_play_per_user
       type: number
       title: 'Track Play Per User'
-      sql: case when {track_play_users} = 0 then 0 else {track_plays} / {track_play_users} end
-
-    - name: track_complete_per_user
-      type: number
-      title: 'Track Complete Per User'
-      sql: case when {track_complete_users} = 0 then 0 else {track_complete} / {track_complete_users} end
-
-    - name: track_completion_rate
-      title: Completion Rate %
-      type: number
-      sql: "({track_complete} / NULLIF({track_plays}, 0) * 100)"
-      meta:
-        suffix: " %"
-    
+      sql: safe_divide({track_plays}, {track_play_users})
+   
     - name: track_play_5s
       title: Track Plays 5s
-      type: sum
-      sql: case when event_date > "2025-06-11" and event_name in ('track_start_5s') then 1 when event_date <= "2025-06-11" and event_name in ('track_start') then 1 else 0 end
-    
+      type: count
+      sql: event_name
+      filters:
+        - sql: (event_date > '2025-06-11' and event_name in ('track_start_5s') or event_date <= '2025-06-11' and event_name in ('track_start'))
+      
     - name: track_pseudo_complete
-      title: Track Pseudo Completes
-      type: sum
-      sql: case when platform = 'WEB' and mobile_brand_name = 'Smartify' and event_name = 'track_complete' then 1 when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) <= 13 and event_name = 'track_complete' then 1  when platform = 'ANDROID' and CAST({device_mobile_os_version} as int) > 13 and event_name = 'track_pseudo_complete' then 1 when (platform != 'ANDROID' and NOT (platform = 'WEB' and mobile_brand_name = 'Smartify')) and event_name = 'track_pseudo_complete' then 1 else 0 end
-    
-    - name: new_completion_rate
-      title: New Completion Rate %
+      type: count
+      sql: event_name
+      filters:
+        - sql: |-
+            (
+              (event_date < DATE '2025-06-04' AND event_name = 'track_complete')
+              OR
+              (
+                event_date >= DATE '2025-06-04'
+                AND (
+                  stream_id IN ('1047860117','10374153553')
+                  OR (stream_id = '1913717213' AND event_custom_timestamp IS NOT NULL)
+                )
+                AND event_name = 'track_complete'
+              )
+              OR
+              (
+                event_date >= DATE '2025-06-04'
+                AND (
+                  stream_id IN ('1047860114')
+                  OR (stream_id = '1913717213' AND event_custom_timestamp IS NULL)
+                )
+                AND event_name = 'track_pseudo_complete'
+              )
+            )
+        # - sql: |-
+        #     (
+        #       ( stream_id = '1913717213'
+        #       AND event_custom_timestamp is not null
+        #       AND event_name = 'track_complete' )
+        #     OR
+        #       ( stream_id = '1047860114'
+        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) <= 13
+        #       AND event_name = 'track_complete' )
+        #     OR
+        #       ( stream_id = '1047860114'
+        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) > 13
+        #       AND event_name = 'track_pseudo_complete' )
+        #     OR
+        #       ( stream_id <> '1047860114'
+        #       AND NOT ( stream_id = '1913717213' AND event_custom_timestamp is not null )
+        #       AND event_name = 'track_pseudo_complete' )
+        #     )
+
+    - name: completion_rate
+      title: Completion Rate %
       type: number
-      sql: "({track_pseudo_complete} / NULLIF({track_play_5s}, 0) * 100)"
+      sql: "safe_divide({track_pseudo_complete}, {track_play_5s}) * 100"
       meta:
-        suffix: " %"
+        suffix: ' %'
 
     - name: track_listen_time
       title: Listen Time
       type: sum
       sql: track_listen_time
       shown: false
-
-    - name: listen_time_seconds
-      title: Listen Time (Seconds)
-      type: number
-      sql: "{track_listen_time}/1000"
 
     - name: listen_time_minutes
       title: Listen Time (Min)
@@ -217,13 +274,16 @@ cubes:
     - name: listen_time_per_user
       type: number
       title: 'Avg User Listen Time'
-      sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
+      sql: "safe_divide({listen_time_minutes}, {track_play_users})"
 
 #Wayfinding Measures
     - name: wayfinding_directions
       title: Directions
-      type: sum
-      sql: case when event_name = 'click_button' and component_type = 'track_wayfinding' then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_button'
+        - sql: component_type = 'track_wayfinding'
 
     - name: wayfinding_directions_users
       title: Wayfinding Users
@@ -232,121 +292,93 @@ cubes:
     
     - name: wayfinding_route_current
       title: Route to Current
-      type: sum
-      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_current_track' then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_button'
+        - sql: content_category = 'wayfinding'
+        - sql: event_label = 'route_to_current_track'
     
     - name: wayfinding_route_next
       title: Route to Next
-      type: sum
-      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'route_to_next_track' then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_button'
+        - sql: content_category = 'wayfinding'
+        - sql: event_label = 'route_to_next_track'
 
     - name: wayfinding_floor_plan
       title: Floor Plan
-      type: sum
-      sql: case when event_name = 'click_button' and content_category = 'wayfinding' and event_label = 'floor_plan' then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_button'
+        - sql: content_category = 'wayfinding'
+        - sql: event_label = 'floor_plan'
     
     - name: wayfinding_survey_votes
       title: Wayfinding Survey Votes
-      type: sum
-      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') then 1 else 0 end
-    
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_icon'
+        - sql: component_type = 'icon_feedback'
+        - sql: contains_substr(content_category, 'wayfinding')
+
     - name: wayfinding_survey_positive
       title: Wayfinding Survey Positive
-      type: sum
-      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label = 'positive' then 1 else 0 end
-    
-    - name: wayfinding_survey_negative
-      title: Wayfinding Survey Negative
-      type: sum
-      sql: case when event_name = 'click_icon' and component_type = 'icon_feedback' and contains_substr(content_category, 'wayfinding') and event_label = 'negative' then 1 else 0 end
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'click_icon'
+        - sql: component_type = 'icon_feedback'
+        - sql: contains_substr(content_category, 'wayfinding')
+        - sql: event_label = 'positive'
+
+    # - name: wayfinding_survey_negative
+    #   title: Wayfinding Survey Negative
+    #   type: count
+    #   sql: event_name
+    #   filters:
+    #     - sql: event_name = 'click_icon'
+    #     - sql: component_type = 'icon_feedback'
+    #     - sql: contains_substr(content_category, 'wayfinding')
+    #     - sql: event_label = 'negative'
 
     - name: wayfinding_survey_rating
       title: Wayfinding Rating %
       type: number
-      sql: "({wayfinding_survey_positive} / NULLIF({wayfinding_survey_votes}, 0) * 100)"
-      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_positive} / {wayfinding_survey_votes} end
+      sql: "safe_divide({wayfinding_survey_positive}, {wayfinding_survey_votes}) * 100"
       meta:
-        suffix: " %"
+        suffix: ' %'
 
     - name: wayfinding_tour_user_share
       title: User Share %
       type: number
-      sql: "({wayfinding_directions_users} / NULLIF({tour_users}, 0) * 100)"
-      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_votes} / {tour_users} end
+      sql: "safe_divide({wayfinding_directions_users}, {tour_users}) * 100"
       meta:
-        suffix: " %"
+        suffix: ' %'
 
     - name: wayfinding_track_user_share
       title: Wayfinding Track %
       type: number
-      sql: "({wayfinding_directions_users} / NULLIF({track_play_users}, 0) * 100)"
-      #sql: case when {wayfinding_survey_votes} = 0 then 0 else {wayfinding_survey_votes} / {tour_users} end
+      sql: "safe_divide({wayfinding_directions_users}, {track_play_users}) * 100"
       meta:
-        suffix: " %"
+        suffix: ' %'
 
-    #Bespoke Tour Measures
-    - name: ptour_created
-      title: Bespoke Tour Created
-      type: count_distinct_approx
-      sql: case when STARTS_WITH(tour_id,"ptour_") then tour_id else null end
-
-    - name: ptour_users
-      title: Bespoke Tour Users
-      type: count_distinct_approx
-      sql: case when STARTS_WITH(tour_id,"ptour_") then user_pseudo_id else null end
-
-    - name: ptour_views
-      title: Bespoke Tour Views
-      type: sum
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
-
-    - name: ptour_track_plays
-      title: Bespoke Track Plays
-      type: sum
-      sql: case when event_name in ('track_start') and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
-    
-    - name: ptour_track_complete
-      title: Bespoke Track Complete
-      type: sum
-      sql: case when event_name in ('track_complete') and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
-
-    - name: bespoke_page_language
-      title: Bespoke Language
-      type: sum
-      sql: case when event_name in ('page_view','screen_view') and contains_substr(page_path, "/create-tour/language") then 1 else 0 end
-
-    - name: bespoke_page_topics
-      title: Bespoke Topics
-      type: sum
-      sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/tiles" then 1 else 0 end
-
-    - name: bespoke_page_stops
-      title: Bespoke Stops
-      type: sum
-      sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/stops" then 1 else 0 end
-
-    - name: bespoke_page_duration
-      title: Bespoke Duration
-      type: sum
-      sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/duration" then 1 else 0 end
-
-    - name: bespoke_page_save
-      title: Bespoke Save Tour
-      type: sum
-      sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/save-tour" then 1 else 0 end
-  
   joins:
     - name: venue_lookup_tracks
       relationship: many_to_one
-      sql: '{CUBE.track_id_locale} = {venue_lookup_tracks.track_sid_locale}'
+      sql: "{CUBE.track_id_locale} = {venue_lookup_tracks.track_sid_locale}"
     
     - name: venue_lookup_tours
       relationship: many_to_one
-      sql: '{CUBE.tour_id} = {venue_lookup_tours.tour_sid}'
+      sql: "{CUBE.tour_id} = {venue_lookup_tours.tour_sid}"
 
     - name: venue_lookup_language
       relationship: many_to_one
-      sql: '{CUBE.device_language} = {venue_lookup_language.device_language}'
+      sql: "{CUBE.device_language} = {venue_lookup_language.device_language}"
 
   
 #   pre_aggregations:
