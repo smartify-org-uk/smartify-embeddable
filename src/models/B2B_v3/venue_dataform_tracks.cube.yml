@@ -234,24 +234,6 @@ cubes:
                 AND event_name = 'track_pseudo_complete'
               )
             )
-        # - sql: |-
-        #     (
-        #       ( stream_id = '1913717213'
-        #       AND event_custom_timestamp is not null
-        #       AND event_name = 'track_complete' )
-        #     OR
-        #       ( stream_id = '1047860114'
-        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) <= 13
-        #       AND event_name = 'track_complete' )
-        #     OR
-        #       ( stream_id = '1047860114'
-        #       AND SAFE_CAST({device_mobile_os_version} AS INT64) > 13
-        #       AND event_name = 'track_pseudo_complete' )
-        #     OR
-        #       ( stream_id <> '1047860114'
-        #       AND NOT ( stream_id = '1913717213' AND event_custom_timestamp is not null )
-        #       AND event_name = 'track_pseudo_complete' )
-        #     )
 
     - name: completion_rate
       title: Completion Rate %
@@ -367,10 +349,33 @@ cubes:
       meta:
         suffix: ' %'
 
+    - name: numpad_hit
+      title: Numpad Searches
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name = 'numpad_recognition_hit'
+    
+    - name: numpad_hit_users
+      title: Numpad Users
+      type: count_distinct_approx
+      sql: user_pseudo_id
+      filters:
+        - sql: event_name = 'numpad_recognition_hit'
+
+    - name: numpad_hits_per_user
+      title: Avg Numpad Searhes
+      type: number
+      sql: "safe_divide({numpad_hit}, {numpad_hit_users})"
+
   joins:
     - name: venue_lookup_tracks
       relationship: many_to_one
       sql: "{CUBE.track_id_locale} = {venue_lookup_tracks.track_sid_locale}"
+
+    - name: venue_lookup_tracks_nump
+      relationship: many_to_one
+      sql: "{CUBE.track_id} = {venue_lookup_tracks_nump.track_sid}"
     
     - name: venue_lookup_tours
       relationship: many_to_one

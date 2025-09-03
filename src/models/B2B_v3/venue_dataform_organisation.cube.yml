@@ -1,0 +1,218 @@
+cubes:
+- name: venue_dataform_organisation
+  data_source: default
+  sql: >
+    select
+      event_date
+      ,event_params_custom.event_custom_timestamp
+      ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
+      ,user_pseudo_id
+      ,is_active_user
+      ,event_name
+      ,stream_id
+      ,device.category as device_category
+      --,device.language as device_language
+      ,geo.country
+      --,event_params.engagement_time_msec
+      ,safe_cast(user_properties.user_age as int64) as user_age
+      --,user_properties.user_language
+      ,user_properties.user_gender
+      --,ifnull(user_properties.user_logged, 'false') as user_logged
+      ,event_params_custom.client_connectivity
+      --,collected_traffic_source.manual_content as utm_content
+      --,collected_traffic_source.manual_term as utm_term
+      --,event_params_custom.event_label
+      ,event_params_custom.page_type
+      ,event_params_custom.venue_id
+      ,event_params_custom.organisation_id
+      ,event_params_custom.zone_id
+      ,event_params_custom.zone_type
+      ,event_params_custom.object_id
+      ,case
+        when event_params_custom.track_listen_time_string = 'inf' then 0
+        else CAST(event_params_custom.track_listen_time_string AS NUMERIC)
+      END AS track_listen_time
+    from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+    where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
+      and ('{COMPILE_CONTEXT.securityContext.venue_id}' IS NULL
+          or '{COMPILE_CONTEXT.securityContext.venue_id}' = ''
+          or '{COMPILE_CONTEXT.securityContext.venue_id}' = 'undefined'
+          or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
+      )
+      and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
+      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
+      and stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553')
+      and not (
+          event_params_custom.event_custom_timestamp is not null 
+          and DATE(TIMESTAMP_SECONDS(event_params_custom.event_custom_timestamp)) = '2025-06-06'
+          and stream_id = '1913717213'
+          and device.mobile_brand_name =  'Smartify'
+      )
+
+  dimensions:
+    - name: datetime
+      type: time
+      sql: event_timestamp
+
+    - name: user_connectivity
+      type: string
+      sql: |-
+        case
+          when (client_connectivity = '' or client_connectivity is null) then 'Unknown'
+          when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi'
+          else 'Cellular'
+        end
+        
+    - name: device_platform
+      type: string
+      sql: |-
+        case
+          when stream_id = '1047860117' then 'iOS'
+          when stream_id = '1047860114' then 'Android'
+          when (stream_id = '1913717213' and device_category in ('tablet','desktop')) then 'Desktop'
+          when (stream_id = '10374153553' or (stream_id = '1913717213' and event_custom_timestamp is not null)) then 'Hardware'
+          else 'Webapp'
+        end
+
+    # - name: user_pseudo_id
+    #   type: string
+    #   sql: user_pseudo_id
+
+    - name: stream_id
+      type: string
+      sql: stream_id
+
+    # - name: device_language
+    #   type: string
+    #   sql: device_language
+    #   primaryKey: true
+    #   shown: false
+    
+    # - name: user_language
+    #   type: string
+    #   sql: user_language
+
+    - name: country
+      type: string
+      sql: if(country = '', 'Unknown', country)
+
+    - name: user_gender
+      type: string
+      sql: |-
+        case 
+          when user_gender in ('Male', 'MALE', 'Man', 'Mand', 'Masculino', '男性', 'זכר', 'Männlich', 'Mann', 'Homme', 'Hombre') then 'Male' 
+          when user_gender in ('Female', 'Woman', 'Femme', 'Mujer', 'Vrouw', 'Weiblich', 'Frau', 'Feminino', '女性', 'Donna', 'Kvinde') then 'Female' 
+          when user_gender in ('Unspecified', 'Non spécifié', 'Sin especificar') then 'Unspecified' 
+          when user_gender in ('Other', 'Autre') then 'Other'
+          else 'Unknown'
+        end
+
+
+    - name: user_age_range
+      type: string
+      sql: |-
+        case
+          when user_age < 18 then '- 18'
+          when user_age >= 18 and user_age < 25 then '18 - 24'
+          when user_age >= 25 and user_age < 35 then '25 - 34'
+          when user_age >= 35 and user_age < 45 then '35 - 44'
+          when user_age >= 45 and user_age < 55 then '45 - 54'
+          when user_age >= 55 and user_age < 65 then '55 - 64'
+          when user_age >= 65 and user_age < 71 then '65 - 70'
+          when user_age >= 71 then '71+' 
+          else 'Unknown'
+        end
+    
+    - name: user_generation
+      type: string
+      sql: |-
+        case
+          when cast(user_age as int) >= 0 and cast(user_age as int) <= 12 then 'Gen Alpha'
+          when cast(user_age as int) >= 13 and cast(user_age as int) <= 28 then 'Gen Z'
+          when cast(user_age as int) >= 29 and cast(user_age as int) <= 44 then 'Millennials'
+          when cast(user_age as int) >= 45 and cast(user_age as int) <= 60 then 'Gen X'
+          when cast(user_age as int) >= 61 and cast(user_age as int) <= 79 then 'Baby Boomers'
+          when cast(user_age as int) >= 80 then 'Silent Generation'
+          else 'Unknown'
+        end
+    
+    - name: organisation_id
+      type: string
+      sql: organisation_id
+    
+    - name: venue_id
+      type: string
+      sql: case when (venue_id = '' or venue_id is null) then 'No linked venue' else venue_id end
+
+    - name: zone_id
+      type: string
+      sql: ifnull(zone_id, 'no zone')
+
+  measures:
+    - name: active_user
+      type: count_distinct_approx
+      title: Total Users
+      sql: |- 
+        case
+          when is_active_user = true then user_pseudo_id
+          when event_date between '2025-04-21' and '2025-04-28'
+            and event_name in ('email_sent', 'in_app_sent', 'email_delivered', 'email_opened', 'in_app_opened', 'in_app_clicked', 'unsubscribe', 'push_opened', 'Email_Link_Clicked', 'push_sent', 'push_delivered') then null
+          else user_pseudo_id 
+        end
+    
+    - name: object_views
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name in ('page_view', 'screen_view')
+        - sql: contains_substr(page_type, 'object_dp')
+    
+    - name: object_scans_users
+      type: count_distinct_approx
+      title: Object Scan Users
+      sql: user_pseudo_id
+      filters:
+        - sql: event_name = 'scan_recognition_hit'
+        - sql: object_id is not null
+    
+    - name: tour_views
+      type: count
+      title: Tour Views
+      sql: event_name
+      filters:
+        - sql: event_name in ('page_view', 'screen_view')
+        - sql: contains_substr(page_type, 'tour_dp')
+      
+    - name: exhibition_views
+      type: count
+      sql: event_name
+      filters:
+        - sql: event_name in ('screen_view', 'page_view')
+        - sql: contains_substr(page_type, 'exhibition_dp')
+    
+    - name: track_plays
+      type: count
+      title: Track Plays
+      sql: event_name
+      filters:
+        - sql: event_name in ('track_start')
+    
+    - name: track_listen_time
+      title: Listen Time
+      type: sum
+      sql: track_listen_time
+
+    - name: listen_time_minutes
+      title: Listen Time (Min)
+      type: number
+      sql: safe_divide({track_listen_time}, 60000)
+    
+    - name: total_venues
+      type: count_distinct
+      sql: venue_id
+      filters:
+        - sql: not contains_substr(venue_id, ',')
+    
+    - name: total_zones
+      type: count_distinct
+      sql: zone_id

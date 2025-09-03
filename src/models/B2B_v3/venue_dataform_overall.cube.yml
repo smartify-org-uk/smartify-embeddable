@@ -73,9 +73,9 @@ cubes:
           else 'Webapp'
         end
 
-    - name: user_pseudo_id
-      type: string
-      sql: user_pseudo_id
+    # - name: user_pseudo_id
+    #   type: string
+    #   sql: user_pseudo_id
 
     - name: stream_id
       type: string
@@ -178,7 +178,6 @@ cubes:
       filters:
         - sql: user_logged = 'true'
         - sql: is_active_user = true
-      #sql: case when (user_logged = 'true' and is_active_user = true) then user_pseudo_id else null end
     
     - name: total_actions
       type: count
@@ -188,7 +187,6 @@ cubes:
       title: Events per User
       type: number
       sql: round(safe_divide({total_actions}, {active_user}), 2)
-      #sql: 'ROUND({total_actions} / {active_user}, 2)'
 
     #CONTENT DATA
     #Object
@@ -198,7 +196,6 @@ cubes:
       filters:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'object_dp')
-      #sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, 'object_dp') and object_id is not null then 1 else 0 end
 
     - name: object_views_users
       type: count_distinct_approx
@@ -207,13 +204,11 @@ cubes:
       filters:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'object_dp')
-      #sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, 'object_dp') and object_id is not null then user_pseudo_id else null end
 
     - name: object_views_per_user
       title: Objectect View / User
       type: number
       sql: safe_divide({object_views}, {object_views_users})
-      #sql: case when {object_views_users} = 0 then 0 else {object_views} / {object_views_users} end
     
     - name: object_scans
       type: count
@@ -222,7 +217,6 @@ cubes:
       filters:
         - sql: event_name = 'scan_recognition_hit'
         - sql: object_id is not null
-      #sql: case when event_name in ('scan_recognition_hit') and object_id is not null then 1 when (event_name = 'object_scan' and event_date <= '2023-05-05') and object_id is not null then 1 when (event_name = 'artwork_recognised' and event_date <= '2022-11-11') and object_id is not null then 1 else 0 end
 
     - name: object_scans_users
       type: count_distinct_approx
@@ -231,13 +225,11 @@ cubes:
       filters:
         - sql: event_name = 'scan_recognition_hit'
         - sql: object_id is not null
-      #sql: case when event_name in ('scan_recognition_hit') and object_id is not null then user_pseudo_id when (event_name = 'object_scan' and event_date <= '2023-05-05') and object_id is not null then user_pseudo_id when (event_name = 'artwork_recognised' and event_date <= '2022-11-11') and object_id is not null then user_pseudo_id else null end
 
     - name: object_scans_per_user
       title: Object Scan / User
       type: number
       sql: safe_divide({object_scans}, {object_scans_users})
-      #sql: case when {object_scans_users} = 0 then 0 else {object_scans} / {object_scans_users} end
     
     #Exhibition
     - name: exhibition_views
@@ -246,7 +238,6 @@ cubes:
       filters:
         - sql: event_name in ('screen_view', 'page_view')
         - sql: contains_substr(page_type, 'exhibition_dp')
-      #sql: case when event_name in ('screen_view', 'page_view') and contains_substr(page_type, 'exhibition_dp') then 1 else 0 end
     
     - name: exhibition_views_users
       type: count_distinct_approx
@@ -255,13 +246,11 @@ cubes:
       filters:
         - sql: event_name in ('screen_view', 'page_view')
         - sql: contains_substr(page_type, 'exhibition_dp')
-      #sql: case when event_name in ('screen_view', 'page_view') and contains_substr(page_type, 'exhibition_dp') then user_pseudo_id else null end
 
     - name: exhibition_views_per_user
       title: Exhibition View / User
       type: number
       sql: safe_divide({exhibition_views}, {exhibition_views_users})
-      #sql: case when {exhibition_views_users} = 0 then 0 else {exhibition_views} / {exhibition_views_users} end
     
     #Tours and Tracks
     - name: tour_views
@@ -271,7 +260,6 @@ cubes:
       filters:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'tour_dp')
-      #sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, 'tour_dp') then 1 else 0 end
     
     - name: tour_view_users
       type: count_distinct_approx
@@ -280,13 +268,11 @@ cubes:
       filters:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'tour_dp')
-      #sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, 'tour_dp') or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then user_pseudo_id else null end
 
     - name: tour_views_per_user
       title: Tour View / User
       type: number
       sql: safe_divide({tour_views}, {tour_view_users})
-      #sql: case when {tour_view_users} = 0 then 0 else {tour_views} / {tour_view_users} end
 
     - name: track_plays
       type: count
@@ -294,7 +280,6 @@ cubes:
       sql: event_name
       filters:
         - sql: event_name in ('track_start')
-      #sql: case when event_name in ('track_start') then 1 else 0 end
 
     - name: track_play_users
       type: count_distinct_approx
@@ -302,36 +287,26 @@ cubes:
       sql: user_pseudo_id
       filters:
         - sql: event_name in ('track_start')
-      #sql: case when event_name in ('track_start') then user_pseudo_id else null end
 
     - name: track_plays_per_user
       title: Track Play / User
       type: number
       sql: safe_divide({track_plays}, {track_play_users})
-      #sql: case when {track_play_users} = 0 then 0 else {track_plays} / {track_play_users} end
     
     - name: track_listen_time
       title: Listen Time
       type: sum
       sql: track_listen_time
 
-    # - name: listen_time_seconds
-    #   title: Listen Time (Seconds)
-    #   type: number
-    #   shown: false
-    #   sql: '{track_listen_time}/1000'
-
     - name: listen_time_minutes
       title: Listen Time (Min)
       type: number
       sql: safe_divide({track_listen_time}, 60000)
-      #sql: '{track_listen_time}/60000'
 
     - name: listen_time_per_user
       type: number
       title: 'Avg User Listen Time'
       sql: safe_divide({listen_time_minutes}, {track_play_users})
-      #sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
     
     #SURVEY DATA
     - name: nps_votes
@@ -341,7 +316,6 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'smilies nps'
         - sql: event_name = 'inapp_click'
-      #sql: case when (utm_content = 'Smilies NPS' and event_name = 'inapp_click') then 1 else 0 end
 
     - name: promoters
       type: count
@@ -350,7 +324,6 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'smilies nps'
         - sql: lower(event_label) = 'very positive'
-      #sql: case when (utm_content = 'Smilies NPS' and event_label = 'Very positive') then 1 else 0 end
     
     # - name: passives
     #   type: sum
@@ -364,19 +337,16 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'smilies nps'
         - sql: lower(event_label) in ('negative', 'very negative', 'neutral')
-      #sql: case when (utm_content = 'Smilies NPS' and (event_label = 'Negative' or event_label = 'Very Negative' or event_label = 'Neutral')) then 1 else 0 end
     
     - name: nps_score_100
       type: number
       title: NPS Score (100)
       sql: safe_divide(({promoters} - {detractors}), {nps_votes}) * 100
-      #sql: 'case when {nps_votes} = 0 then 0 else ((({promoters} - {detractors}) / {nps_votes}) * 100) end'
     
     - name: nps_score
       type: number
       title: NPS Score
       sql: ifnull(safe_divide({nps_score_100} + 100, 20), 0)
-      #sql: 'case when {nps_score_100} = 0 then 0 else ({nps_score_100} + 100) / 20 end'
 
     - name: satisfaction_votes
       type: count
@@ -385,7 +355,6 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'satisfaction survey' 
         - sql: event_name = 'inapp_click'
-      #sql: case when (utm_content = 'Satisfaction Survey' and event_name = 'inapp_click') then 1 else 0 end
     
     - name: satisfaction_thumbsup
       type: count
@@ -394,7 +363,6 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'satisfaction survey' 
         - sql: lower(event_label) = 'thumbs up'
-      #sql: case when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs up') then 1 else 0 end
     
     - name: satisfaction_thumbsdown
       type: count
@@ -403,13 +371,11 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'satisfaction survey'
         - sql: lower(event_label) = 'thumbs down'
-      #sql: case when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs down') then 1 else 0 end
 
     - name: satisfaction_rate
       type: number
       title: Satisfaction Rate
       sql: ifnull(round(safe_divide({satisfaction_thumbsup}, {satisfaction_votes}), 3) * 100, 0)
-      #sql: 'case when {satisfaction_votes} = 0 then 0 else round({satisfaction_thumbsup}/{satisfaction_votes},3)*100 end'
 
     - name: negative_feedback_votes
       title: Negative Votes
@@ -418,7 +384,6 @@ cubes:
       filters:
         - sql: lower(utm_content) = 'negative feedback tiles'
         - sql: event_name = 'inapp_click'
-      #sql: case when (utm_content = 'Negative Feedback Tiles' and event_name = 'inapp_click') then 1 else 0 end
   
   joins:
     - name: venue_lookup_region_language
