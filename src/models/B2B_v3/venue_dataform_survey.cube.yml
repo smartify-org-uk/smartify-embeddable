@@ -1,0 +1,145 @@
+cubes:
+  - name: venue_dataform_survey
+    data_source: default
+    sql: >
+      select
+        event_date
+        ,event_params_custom.event_custom_timestamp
+        ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
+        ,user_pseudo_id
+        ,event_name
+        ,stream_id
+        ,collected_traffic_source.manual_content as utm_content
+        ,collected_traffic_source.manual_term as utm_term
+        ,event_params_custom.event_label
+        ,event_params_custom.venue_id
+        ,event_params_custom.organisation_id
+      from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+      where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
+        and ('{COMPILE_CONTEXT.securityContext.venue_id}' IS NULL
+            or '{COMPILE_CONTEXT.securityContext.venue_id}' = ''
+            or '{COMPILE_CONTEXT.securityContext.venue_id}' = 'undefined'
+            or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
+        )
+        and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
+        and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
+        and stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553')
+        and event_name = 'inapp_click'
+
+    dimensions:
+      - name: datetime
+        type: time
+        sql: event_timestamp
+
+      - name: organisation_id
+        type: string
+        sql: organisation_id
+      
+      - name: venue_id
+        type: string
+        sql: case when (venue_id = '' or venue_id is null) then 'No linked venue' else venue_id end
+
+      - name: satisfaction_vote_label
+        type: string
+        sql: case when (lower(utm_content) = 'satisfaction survey' and lower(event_label) = 'thumbs up') then 'positive' when (lower(utm_content) = 'satisfaction survey' and lower(event_label) = 'thumbs down') then 'negative' end
+
+      - name: negative_feedback_label
+        type: string
+        title: Negative Reason
+        sql: case when (lower(utm_content) = 'negative feedback tiles') then utm_term else null end
+      
+      - name: negative_feedback_option
+        type: string
+        title: Option
+        sql: case when (lower(utm_content) = 'negative feedback tiles') then event_label else null end
+
+    measures:
+      - name: nps_votes
+        type: count
+        title: NPS Survey Votes
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'smilies nps'
+          - sql: event_name = 'inapp_click'
+
+      - name: promoters
+        type: count
+        title: NPS Promoters
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'smilies nps'
+          - sql: lower(event_label) = 'very positive'
+      
+      - name: detractors
+        type: count
+        title: NPS Detractors
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'smilies nps'
+          - sql: lower(event_label) in ('negative', 'very negative', 'neutral')
+      
+      - name: nps_score_100
+        type: number
+        title: NPS Score (100)
+        sql: 100.0 * ({promoters} - {detractors}) / NULLIF({nps_votes}, 0)
+      
+      - name: nps_score
+        type: number
+        title: NPS Score
+        sql: COALESCE(({nps_score_100} + 100) / 20.0, 0)
+
+      - name: satisfaction_votes
+        type: count
+        title: Satisfaction Votes
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey' 
+          - sql: event_name = 'inapp_click'
+      
+      - name: satisfaction_thumbsup
+        type: count
+        title: Satisfaction Thumbs Up
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey' 
+          - sql: lower(event_label) = 'thumbs up'
+      
+      - name: satisfaction_thumbsdown
+        type: count
+        title: Satisfaction Thumbs Down
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey'
+          - sql: lower(event_label) = 'thumbs down'
+
+      - name: satisfaction_rate
+        type: number
+        title: Satisfaction Rate
+        sql: "COALESCE(100.0 * {satisfaction_thumbsup} / NULLIF({satisfaction_votes}, 0), 0)"
+
+      - name: negative_feedback_votes
+        title: Negative Votes
+        type: count
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'negative feedback tiles'
+          - sql: event_name = 'inapp_click'
+
+    pre_aggregations:
+      - name: survey_aggregation
+        measures:
+          - venue_dataform_survey.nps_votes
+          - venue_dataform_survey.promoters
+          - venue_dataform_survey.detractors
+          - venue_dataform_survey.satisfaction_votes
+          - venue_dataform_survey.satisfaction_thumbsup
+          - venue_dataform_survey.satisfaction_thumbsdown
+        dimensions:
+          - venue_dataform_survey.datetime
+          - venue_dataform_survey.organisation_id
+          - venue_dataform_survey.venue_id
+          - venue_dataform_survey.satisfaction_vote_label
+          - venue_dataform_survey.negative_feedback_label
+          - venue_dataform_survey.negative_feedback_option
+        timeDimension: venue_dataform_survey.datetime
+        granularity: day

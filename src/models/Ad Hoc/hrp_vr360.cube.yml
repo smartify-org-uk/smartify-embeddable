@@ -3,24 +3,25 @@ cubes:
   data_source: default
   sql: |-
       select
-      event_date
-      ,timestamp_micros(time.event_timestamp) as event_timestamp
-      ,user_pseudo_id
-      ,is_active_user
-      ,event_name
-      ,platform
-      ,device.category as device_category
-      ,page.hostname
-      ,page.path as page_path
-      ,geo.country as geo_country
-      ,stream_id
-      ,event_params_custom.track_id
-      ,event_params_custom.scene_id
-      ,event_params_custom.vr_experience_id
+        event_date
+        ,timestamp_micros(time.event_timestamp) as event_timestamp
+        ,user_pseudo_id
+        --,is_active_user
+        ,event_params.engagement_time_msec
+        ,event_name
+        --,platform
+        --,device.category as device_category
+        ,page.hostname
+        ,page.path as page_path
+        ,geo.country
+        ,stream_id
+        --,event_params_custom.track_id
+        ,event_params_custom.scene_id
+        ,event_params_custom.vr_experience_id
       from `smartify-cc94e.superform_outputs_151371783.ga4_events`
       where event_date >= '2025-07-01'
       and page.hostname = 'ar.smartify.org'
-      and event_name in ('page_view','click_info','scroll','move_scene','click_header','session_start','first_visit','track_start')
+      and event_name in ('page_view','scroll','move_scene','click_info','user_engagement','click_header','session_start','first_visit','track_start','poi_triggered','cta_expanded','audio_paused','audio_played')
 
   dimensions:
     - name: event_date
@@ -42,7 +43,7 @@ cubes:
     
     - name: country
       type: string
-      sql: geo_country
+      sql: country
     
     - name: scene_id
       type: string
@@ -50,9 +51,9 @@ cubes:
       primaryKey: true
       shown: true
     
-    - name: vr_experience_id
-      type: string
-      sql: vr_experience_id
+    # - name: vr_experience_id
+    #   type: string
+    #   sql: vr_experience_id
 
   measures:
     - name: total_users
@@ -76,6 +77,14 @@ cubes:
       sql: event_name
       filters:
         - sql: "(event_name = 'track_start')"
+    
+    - name: total_engagement_time
+      type: sum
+      sql: safe_divide(engagement_time_msec, 60000)
+
+    - name: avg_engagement_time
+      type: number
+      sql: safe_divide({total_engagement_time}, {total_users})
   
   joins:
    - name: hrp_vr360_lookup

@@ -1,29 +1,29 @@
-- name: Belvedere User
+- name: Belvedere
   securityContext:
     organisation_id: org_belvedere
     venue_id:
 
-- name: National Gallery User
+- name: National Gallery
   securityContext:
     organisation_id: org_ng
     venue_id: venue_ng
 
-- name: Salford Museum User
+- name: Salford Museum
   securityContext:
     organisation_id: org_smag
     venue_id:
     
-- name: Tower Bridge User
+- name: Tower Bridge
   securityContext:
     organisation_id: org_towerbridge
     venue_id:
     
-- name: World Press Photo User
+- name: World Press Photo
   securityContext:
     organisation_id: org_wpp
     venue_id:
 
-- name: Museum of Illusions User
+- name: Museum of Illusions
   securityContext:
     organisation_id: org_museumofillusions
     venue_id:
@@ -33,9 +33,14 @@
     organisation_id: org_rmg
     venue_id:
 
-- name: Acropolis Museum User
+- name: Acropolis Museum
   securityContext:
     organisation_id: org_acropolismuseum
+    venue_id:
+
+- name: Hamburger Kunsthalle
+  securityContext:
+    organisation_id: org_hamkunsthalle
     venue_id:
 
 - name: Scottish National Gallery
@@ -48,12 +53,12 @@
     organisation_id: org_smag
     venue_id:
 
-- name: HRP
+- name: Historical Royal Palaces
   securityContext:
     organisation_id: org_hrp
     venue_id:
 
-- name: Smithsonian User
+- name: Smithsonian
   securityContext:
     organisation_id: org_smithsonian
     venue_id:
@@ -63,7 +68,7 @@
     organisation_id: org_qatarmuseums
     venue_id: 
 
-- name: Louvre User
+- name: Louvre
   securityContext:
     organisation_id: org_louvre
     venue_id:
