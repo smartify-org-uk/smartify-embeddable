@@ -7,21 +7,20 @@ cubes:
       ,event_params_custom.event_custom_timestamp
       ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
       ,user_pseudo_id
-      ,is_active_user
+      --,is_active_user
       ,event_name
       ,stream_id
       ,device.category as device_category
       ,device.language as device_language
       ,geo.country
-      ,event_params.engagement_time_msec
       ,safe_cast(user_properties.user_age as int64) as user_age
-      ,user_properties.user_language
+      --,user_properties.user_language
       ,user_properties.user_gender
       ,ifnull(user_properties.user_logged, 'false') as user_logged
       ,event_params_custom.client_connectivity
-      ,collected_traffic_source.manual_content as utm_content
-      ,collected_traffic_source.manual_term as utm_term
-      ,event_params_custom.event_label
+      --,collected_traffic_source.manual_content as utm_content
+      --,collected_traffic_source.manual_term as utm_term
+      --,event_params_custom.event_label
       ,event_params_custom.page_type
       ,event_params_custom.venue_id
       ,event_params_custom.organisation_id
@@ -87,9 +86,9 @@ cubes:
       primaryKey: true
       shown: false
     
-    - name: user_language
-      type: string
-      sql: user_language
+    # - name: user_language
+    #   type: string
+    #   sql: user_language
 
     - name: country
       type: string
@@ -138,33 +137,28 @@ cubes:
       type: string
       sql: user_type
 
-    #SURVEY DATA
-    - name: satisfaction_vote_label
-      type: string
-      sql: case when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs up') then 'positive' when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs down') then 'negative' end
+    # #SURVEY DATA
+    # - name: satisfaction_vote_label
+    #   type: string
+    #   sql: case when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs up') then 'positive' when (utm_content = 'Satisfaction Survey' and event_label = 'Thumbs down') then 'negative' end
   
-    - name: negative_feedback_label
-      type: string
-      title: Negative Reason
-      sql: case when (utm_content = 'Negative Feedback Tiles') then utm_term else null end
+    # - name: negative_feedback_label
+    #   type: string
+    #   title: Negative Reason
+    #   sql: case when (utm_content = 'Negative Feedback Tiles') then utm_term else null end
     
-    - name: negative_feedback_option
-      type: string
-      title: Option
-      sql: case when (utm_content = 'Negative Feedback Tiles') then event_label else null end
+    # - name: negative_feedback_option
+    #   type: string
+    #   title: Option
+    #   sql: case when (utm_content = 'Negative Feedback Tiles') then event_label else null end
     
   measures:
     - name: active_user
       type: count_distinct_approx
       title: Total Users
-      sql: case when is_active_user = true then user_pseudo_id when event_date between '2025-04-21' and '2025-04-28' and event_name in ('email_sent', 'in_app_sent', 'email_delivered', 'email_opened', 'in_app_opened', 'in_app_clicked', 'unsubscribe', 'push_opened', 'Email_Link_Clicked', 'push_sent', 'push_delivered') then null else user_pseudo_id end
-    
-    # - name: old_active_user
-    #   type: count_distinct_approx
-    #   sql: user_pseudo_id
-    #   filters:
-    #     - sql: is_active_user = true
-    #     - sql: not (event_date between "2025-04-21" and "2025-04-28" and event_name in ("email_sent", "in_app_sent", "email_delivered", "email_opened", "in_app_opened", "in_app_clicked", "unsubscribe", "push_opened", "Email_Link_Clicked", "push_sent", "push_delivered"))
+      sql: user_pseudo_id
+      filters:
+        - sql: event_name not in ('view_component','email_sent', 'in_app_sent', 'email_delivered', 'email_opened', 'in_app_opened', 'in_app_clicked', 'unsubscribe', 'push_opened', 'Email_Link_Clicked', 'push_sent', 'push_delivered')
 
     - name: audience_reach
       title: Audience Reach
@@ -177,7 +171,7 @@ cubes:
       sql: user_pseudo_id
       filters:
         - sql: user_logged = 'true'
-        - sql: is_active_user = true
+        #- sql: is_active_user = true
     
     - name: total_actions
       type: count
@@ -186,7 +180,10 @@ cubes:
     - name: actions_per_user
       title: Events per User
       type: number
-      sql: round(safe_divide({total_actions}, {active_user}), 2)
+      #sql: round(safe_divide({total_actions}, {active_user}), 2)
+      sql: "COALESCE(CAST({total_actions} AS DOUBLE) / NULLIF(CAST({active_user} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({total_actions} / NULLIF({active_user}, 0), 0)"
+
 
     #CONTENT DATA
     #Object
@@ -208,7 +205,9 @@ cubes:
     - name: object_views_per_user
       title: Objectect View / User
       type: number
-      sql: safe_divide({object_views}, {object_views_users})
+      #sql: safe_divide({object_views}, {object_views_users})
+      sql: "COALESCE(CAST({object_views} AS DOUBLE) / NULLIF(CAST({object_views_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({object_views} / NULLIF({object_views_users}, 0), 0)"
     
     - name: object_scans
       type: count
@@ -229,7 +228,10 @@ cubes:
     - name: object_scans_per_user
       title: Object Scan / User
       type: number
-      sql: safe_divide({object_scans}, {object_scans_users})
+      #sql: safe_divide({object_scans}, {object_scans_users})
+      sql: "COALESCE(CAST({object_scans} AS DOUBLE) / NULLIF(CAST({object_scans_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({object_scans} / NULLIF({object_scans_users}, 0), 0)"
+
     
     #Exhibition
     - name: exhibition_views
@@ -250,7 +252,10 @@ cubes:
     - name: exhibition_views_per_user
       title: Exhibition View / User
       type: number
-      sql: safe_divide({exhibition_views}, {exhibition_views_users})
+      #sql: safe_divide({exhibition_views}, {exhibition_views_users})
+      sql: "COALESCE(CAST({exhibition_views} AS DOUBLE) / NULLIF(CAST({exhibition_views_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({exhibition_views} / NULLIF({exhibition_views_users}, 0), 0)"
+
     
     #Tours and Tracks
     - name: tour_views
@@ -272,7 +277,9 @@ cubes:
     - name: tour_views_per_user
       title: Tour View / User
       type: number
-      sql: safe_divide({tour_views}, {tour_view_users})
+      #sql: safe_divide({tour_views}, {tour_view_users})
+      sql: "COALESCE(CAST({tour_views} AS DOUBLE) / NULLIF(CAST({tour_view_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({tour_views} / NULLIF({tour_view_users}, 0), 0)"
 
     - name: track_plays
       type: count
@@ -291,7 +298,9 @@ cubes:
     - name: track_plays_per_user
       title: Track Play / User
       type: number
-      sql: safe_divide({track_plays}, {track_play_users})
+      sql: "COALESCE(CAST({track_plays} AS DOUBLE) / NULLIF(CAST({track_play_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "COALESCE({track_plays} / NULLIF({track_play_users}, 0), 0)"
+      #sql: safe_divide({track_plays}, {track_play_users})
     
     - name: track_listen_time
       title: Listen Time
@@ -306,122 +315,117 @@ cubes:
     - name: listen_time_per_user
       type: number
       title: 'Avg User Listen Time'
-      sql: safe_divide({listen_time_minutes}, {track_play_users})
-    
-    #SURVEY DATA
-    - name: nps_votes
-      type: count
-      title: NPS Survey Votes
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'smilies nps'
-        - sql: event_name = 'inapp_click'
+      #sql: safe_divide({listen_time_minutes}, {track_play_users})
+      sql: "COALESCE({listen_time_minutes} / NULLIF({track_play_users}, 0), 0)"
 
-    - name: promoters
-      type: count
-      title: NPS Promoters
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'smilies nps'
-        - sql: lower(event_label) = 'very positive'
     
-    # - name: passives
-    #   type: sum
-    #   title: NPS Neutrals
-    #   sql: case when (utm_content = 'Smilies NPS' and event_label = 'Positive') then 1 else 0 end
-    
-    - name: detractors
-      type: count
-      title: NPS Detractors
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'smilies nps'
-        - sql: lower(event_label) in ('negative', 'very negative', 'neutral')
-    
-    - name: nps_score_100
-      type: number
-      title: NPS Score (100)
-      sql: safe_divide(({promoters} - {detractors}), {nps_votes}) * 100
-    
-    - name: nps_score
-      type: number
-      title: NPS Score
-      sql: ifnull(safe_divide({nps_score_100} + 100, 20), 0)
+    # #SURVEY DATA
+    # - name: nps_votes
+    #   type: count
+    #   title: NPS Survey Votes
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'smilies nps'
+    #     - sql: event_name = 'inapp_click'
 
-    - name: satisfaction_votes
-      type: count
-      title: Satisfaction Votes
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'satisfaction survey' 
-        - sql: event_name = 'inapp_click'
+    # - name: promoters
+    #   type: count
+    #   title: NPS Promoters
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'smilies nps'
+    #     - sql: lower(event_label) = 'very positive'
     
-    - name: satisfaction_thumbsup
-      type: count
-      title: Satisfaction Thumbs Up
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'satisfaction survey' 
-        - sql: lower(event_label) = 'thumbs up'
+    # # - name: passives
+    # #   type: sum
+    # #   title: NPS Neutrals
+    # #   sql: case when (utm_content = 'Smilies NPS' and event_label = 'Positive') then 1 else 0 end
     
-    - name: satisfaction_thumbsdown
-      type: count
-      title: Satisfaction Thumbs Down
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'satisfaction survey'
-        - sql: lower(event_label) = 'thumbs down'
+    # - name: detractors
+    #   type: count
+    #   title: NPS Detractors
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'smilies nps'
+    #     - sql: lower(event_label) in ('negative', 'very negative', 'neutral')
+    
+    # - name: nps_score_100
+    #   type: number
+    #   title: NPS Score (100)
+    #   sql: safe_divide(({promoters} - {detractors}), {nps_votes}) * 100
+    
+    # - name: nps_score
+    #   type: number
+    #   title: NPS Score
+    #   sql: ifnull(safe_divide({nps_score_100} + 100, 20), 0)
 
-    - name: satisfaction_rate
-      type: number
-      title: Satisfaction Rate
-      sql: ifnull(round(safe_divide({satisfaction_thumbsup}, {satisfaction_votes}), 3) * 100, 0)
+    # - name: satisfaction_votes
+    #   type: count
+    #   title: Satisfaction Votes
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'satisfaction survey' 
+    #     - sql: event_name = 'inapp_click'
+    
+    # - name: satisfaction_thumbsup
+    #   type: count
+    #   title: Satisfaction Thumbs Up
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'satisfaction survey' 
+    #     - sql: lower(event_label) = 'thumbs up'
+    
+    # - name: satisfaction_thumbsdown
+    #   type: count
+    #   title: Satisfaction Thumbs Down
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'satisfaction survey'
+    #     - sql: lower(event_label) = 'thumbs down'
 
-    - name: negative_feedback_votes
-      title: Negative Votes
-      type: count
-      sql: event_name
-      filters:
-        - sql: lower(utm_content) = 'negative feedback tiles'
-        - sql: event_name = 'inapp_click'
+    # - name: satisfaction_rate
+    #   type: number
+    #   title: Satisfaction Rate
+    #   sql: ifnull(round(safe_divide({satisfaction_thumbsup}, {satisfaction_votes}), 3) * 100, 0)
+
+    # - name: negative_feedback_votes
+    #   title: Negative Votes
+    #   type: count
+    #   sql: event_name
+    #   filters:
+    #     - sql: lower(utm_content) = 'negative feedback tiles'
+    #     - sql: event_name = 'inapp_click'
   
   joins:
     - name: venue_lookup_region_language
       relationship: many_to_one
       sql: "{CUBE.device_language} = {venue_lookup_region_language.device_language}"
   
-  # pre_aggregations:
-  #   - name: overall_aggregation
-  #     measures:
-  #       - venue_dataform_overall.total_actions
-  #       - venue_dataform_overall.login_users
-  #       - venue_dataform_overall.active_user
-  #       - venue_dataform_overall.nps_score
-  #       - venue_dataform_overall.satisfaction_votes
-  #       - venue_dataform_overall.satisfaction_rate
-  #       - venue_dataform_overall.negative_feedback_votes
-  #       - venue_dataform_overall.nps_votes
-  #       - venue_dataform_overall.object_views
-  #       - venue_dataform_overall.object_views_users
-  #       - venue_dataform_overall.object_scans
-  #       - venue_dataform_overall.object_scans_users
-  #       - venue_dataform_overall.exhibition_views
-  #       - venue_dataform_overall.exhibition_views_users
-  #       - venue_dataform_overall.tour_views
-  #       - venue_dataform_overall.tour_view_users
-  #       - venue_dataform_overall.track_plays
-  #       - venue_dataform_overall.track_play_users
-  #       - venue_dataform_overall.track_listen_time
-  #       - venue_dataform_overall.listen_time_minutes
-  #     dimensions:
-  #       - venue_dataform_overall.device_platform
-  #       - venue_dataform_overall.user_connectivity
-  #       - venue_dataform_overall.country
-  #       - venue_dataform_overall.user_gender
-  #       - venue_dataform_overall.user_age_range
-  #       - venue_dataform_overall.venue_id
-  #       - venue_dataform_overall.negative_feedback_label
-  #       - venue_lookup_region_language.device_language
-  #       - venue_lookup_region_language.language_name
-  #     timeDimension: venue_dataform_overall.event_date
-  #     granularity: day
+  pre_aggregations:
+    - name: overall_aggregation
+      measures:
+        - venue_dataform_overall.active_user
+        - venue_dataform_overall.login_users
+        - venue_dataform_overall.total_actions
+        - venue_dataform_overall.object_views
+        - venue_dataform_overall.object_views_users
+        - venue_dataform_overall.object_scans
+        - venue_dataform_overall.object_scans_users
+        - venue_dataform_overall.tour_views
+        - venue_dataform_overall.tour_view_users
+        - venue_dataform_overall.track_plays
+        - venue_dataform_overall.track_play_users
+        - venue_dataform_overall.exhibition_views
+        - venue_dataform_overall.exhibition_views_users
+      dimensions:
+        - venue_dataform_overall.datetime
+        - venue_dataform_overall.venue_id
+        - venue_dataform_overall.device_platform
+        - venue_dataform_overall.user_connectivity
+        - venue_dataform_overall.user_age_range
+        - venue_dataform_overall.user_gender
+        - venue_dataform_overall.country
+        - venue_dataform_overall.user_type
+        - venue_lookup_region_language.language_name
+      timeDimension: venue_dataform_overall.datetime
+      granularity: day

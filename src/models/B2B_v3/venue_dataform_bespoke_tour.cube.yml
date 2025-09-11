@@ -10,31 +10,34 @@ cubes:
       ,event_name
       ,stream_id
       ,device.category as device_category
-      --,device.operating_system_version
-      ,geo.country as geo_country
       ,event_params_custom.client_connectivity
-      --,event_params_custom.component_type
-      --,event_params_custom.content_category
-      ,event_params_custom.event_label
+      --,event_params_custom.event_label
       ,event_params_custom.page_type
-      ,event_params_custom.page_path
+      --,event_params_custom.page_path
       ,event_params_custom.venue_id
       ,event_params_custom.organisation_id
       ,event_params_custom.experience_id
       ,event_params_custom.tour_id
       ,event_params_custom.track_id
       ,event_params_custom.audio_language
+      /*
       ,case
         when event_params_custom.track_listen_time_string = 'inf' then 0
         else cast(event_params_custom.track_listen_time_string AS numeric)
       end AS track_listen_time
+      */
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
-    where (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
-      and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
-      and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
-      and (event_params_custom.tour_id = 'tour_nXWykZAxnH9pXEcZONAz' or contains_substr(event_params_custom.tour_id, 'ptour_'))
-      and event_name in ('select_component','track_pause','track_start','page_view','track_start_5s','screen_view','track_resume','track_quartile_25','track_quartile_50','track_quartile_75','track_pseudo_complete','track_complete','track_forward','track_backward','session_start','click_button','first_visit','share','add_favorite','inapp_click')
-
+      where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
+        and ('{COMPILE_CONTEXT.securityContext.venue_id}' IS NULL
+            or '{COMPILE_CONTEXT.securityContext.venue_id}' = ''
+            or '{COMPILE_CONTEXT.securityContext.venue_id}' = 'undefined'
+            or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
+        ) and
+        (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ','))) and
+        event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH) and
+        stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553") and
+        (event_params_custom.tour_id = 'tour_nXWykZAxnH9pXEcZONAz' or contains_substr(event_params_custom.tour_id, 'ptour_')) and 
+        event_name in ('select_component','track_pause','track_start','page_view','track_start_5s','screen_view','track_resume','track_quartile_25','track_quartile_50','track_quartile_75','track_pseudo_complete','track_complete','track_forward','track_backward','session_start','click_button','first_visit','share','add_favorite','inapp_click')
       
   dimensions:
     - name: datetime
@@ -83,9 +86,9 @@ cubes:
       primaryKey: true
       shown: true
 
-    - name: tour_type
-      type: string
-      sql: case when STARTS_WITH(tour_id,"ptour_") then "Bespoke Tours" when STARTS_WITH(tour_id,"tour_") then "Venue Tours" else null end
+    # - name: tour_type
+    #   type: string
+    #   sql: case when STARTS_WITH(tour_id,"ptour_") then "Bespoke Tours" when STARTS_WITH(tour_id,"tour_") then "Venue Tours" else null end
     
     - name: track_id
       type: string
@@ -101,24 +104,24 @@ cubes:
       type: string
       sql: audio_language
     
-    - name: event_label
-      type: string
-      sql: event_label
+    # - name: event_label
+    #   type: string
+    #   sql: event_label
   
   measures:
-    - name: tour_views
-      type: count
-      sql: event_name
-      filters:
-        - sql: event_name in ('page_view', 'screen_view')
-        - sql: contains_substr(page_type, 'tour_dp')
+    # - name: tour_views
+    #   type: count
+    #   sql: event_name
+    #   filters:
+    #     - sql: event_name in ('page_view', 'screen_view')
+    #     - sql: contains_substr(page_type, 'tour_dp')
     
-    - name: tour_users
-      type: count_distinct_approx
-      sql: user_pseudo_id
-      filters:
-        - sql: event_name in ('page_view', 'screen_view', 'track_start')
-        - sql: tour_id is not null
+    # - name: tour_users
+    #   type: count_distinct_approx
+    #   sql: user_pseudo_id
+    #   filters:
+    #     - sql: event_name in ('page_view', 'screen_view', 'track_start')
+    #     - sql: tour_id is not null
 
     - name: track_plays
       title: Plays
@@ -184,18 +187,16 @@ cubes:
     - name: completion_rate
       title: Completion Rate %
       type: number
-      sql: "safe_divide({track_pseudo_complete}, {track_play_5s}) * 100"
+      sql: "COALESCE(100.0 * {track_pseudo_complete} / NULLIF({track_play_5s}, 0), 0)"
       meta:
         suffix: ' %'
 
-    #Bespoek Tour Measures
     - name: ptour_created
       title: Bespoke Tour Created
       type: count_distinct
       sql: tour_id
       filters:
         - sql: STARTS_WITH(tour_id,"ptour_")
-      #sql: case when STARTS_WITH(tour_id,"ptour_") then tour_id else null end
 
     - name: ptour_users
       title: Bespoke Tour Users
@@ -203,7 +204,6 @@ cubes:
       sql: user_pseudo_id
       filters:
         - sql: STARTS_WITH(tour_id,"ptour_")
-      #sql: case when STARTS_WITH(tour_id,"ptour_") then user_pseudo_id else null end
 
     - name: ptour_views
       title: Bespoke Tour Views
@@ -213,7 +213,6 @@ cubes:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'tour_dp')
         - sql: STARTS_WITH(tour_id,"ptour_")
-      #sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
 
     # - name: ptour_track_plays
     #   title: Bespoke Track Plays
@@ -222,7 +221,6 @@ cubes:
     #   filters:
     #     - sql: event_name in ('track_start')
     #     - sql: STARTS_WITH(tour_id,"ptour_")
-    #   #sql: case when event_name in ('track_start') and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
     
     # - name: ptour_track_complete
     #   title: Bespoke Track Complete
@@ -230,7 +228,6 @@ cubes:
     #   filters:
     #     - sql: event_name in ('track_complete')
     #     - sql: STARTS_WITH(tour_id,"ptour_")
-    #   #sql: case when event_name in ('track_complete') and STARTS_WITH(tour_id,"ptour_") then 1 else 0 end
 
     # - name: bespoke_page_language
     #   title: Bespoke Language
@@ -271,30 +268,27 @@ cubes:
       sql: '{CUBE.experience_id} = {venue_lookup_experiences.experience_id}'
 
   
-#   pre_aggregations:
-#     - name: media_player_aggregation
-#       measures:
-#         - venue_dataform_tracks.track_plays
-#         - venue_dataform_tracks.track_play_users
-#         - venue_dataform_tracks.track_complete
-#         - venue_dataform_tracks.track_completion_rate
-#         - venue_dataform_tracks.track_complete_users
-#         - venue_dataform_tracks.track_listen_time
-#         - venue_dataform_tracks.listen_time_minutes
-#         - venue_dataform_tracks.tour_views
-#         - venue_dataform_tracks.tour_users
-#       dimensions:
-#         - venue_dataform_tracks.device_platform
-#         - venue_dataform_tracks.user_connectivity
-#         - venue_dataform_tracks.venue_id
-#         - venue_dataform_tracks.track_id
-#         - venue_dataform_tracks.tour_id
-#         - venue_dataform_tracks.track_language
-#         - venue_dataform_tracks.country
-#         - venue_dataform_tracks.user_age_range
-#         - venue_dataform_tracks.user_gender
-#         - venue_lookup_tracks.track_name
-#         - venue_lookup_tours.tour_name
-#         - venue_lookup_language.language_name
-#       timeDimension: venue_dataform_tracks.event_date
-#       granularity: day
+  pre_aggregations:
+    - name: media_player_aggregation
+      measures:
+        - venue_dataform_bespoke_tour.track_plays
+        - venue_dataform_bespoke_tour.track_play_users
+        - venue_dataform_bespoke_tour.track_play_5s
+        - venue_dataform_bespoke_tour.track_pseudo_complete
+        - venue_dataform_bespoke_tour.ptour_created
+        - venue_dataform_bespoke_tour.ptour_users
+        - venue_dataform_bespoke_tour.ptour_views
+      dimensions:
+        - venue_dataform_bespoke_tour.datetime
+        - venue_dataform_bespoke_tour.device_platform
+        - venue_dataform_bespoke_tour.user_connectivity
+        - venue_dataform_bespoke_tour.venue_id
+        - venue_dataform_bespoke_tour.organisation_id
+        - venue_dataform_bespoke_tour.track_id
+        - venue_dataform_bespoke_tour.tour_id
+        - venue_dataform_bespoke_tour.track_language
+        - venue_dataform_bespoke_tour.experience_id
+        - venue_lookup_tracks.track_name
+        - venue_lookup_tours.tour_name
+      timeDimension: venue_dataform_bespoke_tour.datetime
+      granularity: day

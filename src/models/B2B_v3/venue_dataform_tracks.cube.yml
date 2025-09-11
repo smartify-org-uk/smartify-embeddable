@@ -5,7 +5,10 @@ cubes:
     select
       event_date
       ,event_params_custom.event_custom_timestamp
-      ,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
+      ,case 
+        when is_measurement_protocol_hit = true then timestamp_seconds(event_params_custom.event_custom_timestamp) 
+        else timestamp_micros(time.event_timestamp)
+      end as event_timestamp
       ,user_pseudo_id
       ,event_name
       ,stream_id
@@ -41,8 +44,7 @@ cubes:
       )
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
       and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
-      --and event_name != 'view_component'
-      and event_name in ('add_favorite','click_button','click_icon','click_link','Explore_Tour','external_purchase','first_visit','inapp_click','numpad_recognition_hit','page_view','play_track_by_deeplink','qrcode_open','remove_favorite','scan_recognition_hit','screen_view','select_component','session_start','share','tour_details','tour_download_complete','tour_download_start','track_backward','track_complete','track_forward','track_pause','track_pseudo_complete','track_quartile_25','track_quartile_50','track_quartile_75','track_resume','track_start','track_start_5s','track_stop','translate_text')
+      and event_name in ('track_pause','track_start','track_start_5s','track_quartile_25','track_quartile_50','track_pseudo_complete','track_quartile_75','track_complete','track_resume','track_forward','click_button','track_backward','numpad_recognition_hit','click_icon','page_view','screen_view')
       and stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553')
       and (
         event_params_custom.track_id is not null or 
@@ -151,10 +153,6 @@ cubes:
       type: string
       sql: event_label
     
-    # - name: app_version_num
-    #   type: number
-    #   sql: REGEXP_REPLACE(CONCAT(REGEXP_EXTRACT(app_info.version, r'^\s*(\d+)'),IFNULL(CONCAT('.',REGEXP_REPLACE(REGEXP_EXTRACT(app_info.version, r'^\s*\d+\.(\d[\d\.]*)'), r'\.','')),'')),r'^(\d+)\.0+$', r'\1.0')
-
     - name: wayfinding_survey_label
       type: string
       sql: |-
@@ -199,7 +197,9 @@ cubes:
     - name: track_play_per_user
       type: number
       title: 'Track Play Per User'
-      sql: safe_divide({track_plays}, {track_play_users})
+      sql: "COALESCE(CAST({track_plays} AS DOUBLE) / NULLIF(CAST({track_play_users} AS DOUBLE), 0.0), 0.0)"
+      #DONE
+      #sql: ({track_plays}, {track_play_users})
    
     - name: track_play_5s
       title: Track Plays 5s
@@ -238,7 +238,8 @@ cubes:
     - name: completion_rate
       title: Completion Rate %
       type: number
-      sql: "safe_divide({track_pseudo_complete}, {track_play_5s}) * 100"
+      #sql: "({track_pseudo_complete}, {track_play_5s}) * 100"
+      sql: "COALESCE(100.0 * {track_pseudo_complete} / NULLIF({track_play_5s}, 0), 0)"
       meta:
         suffix: ' %'
 
@@ -251,12 +252,15 @@ cubes:
     - name: listen_time_minutes
       title: Listen Time (Min)
       type: number
-      sql: "round({track_listen_time}/60000,0)"
+      #sql: "round({track_listen_time}/60000,0)"
+      sql: "ROUND(CAST({track_listen_time} AS DOUBLE)/60000.0)"
 
     - name: listen_time_per_user
       type: number
       title: 'Avg User Listen Time'
-      sql: "safe_divide({listen_time_minutes}, {track_play_users})"
+      #sql: "COALESCE(CAST({listen_time_minutes} AS DOUBLE) / NULLIF(CAST({track_play_users} AS DOUBLE), 0.0), 0.0)"
+      sql: "COALESCE({listen_time_minutes} / NULLIF(CAST({track_play_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "({listen_time_minutes}, {track_play_users})"
 
 #Wayfinding Measures
     - name: wayfinding_directions
@@ -318,34 +322,28 @@ cubes:
         - sql: contains_substr(content_category, 'wayfinding')
         - sql: event_label = 'positive'
 
-    # - name: wayfinding_survey_negative
-    #   title: Wayfinding Survey Negative
-    #   type: count
-    #   sql: event_name
-    #   filters:
-    #     - sql: event_name = 'click_icon'
-    #     - sql: component_type = 'icon_feedback'
-    #     - sql: contains_substr(content_category, 'wayfinding')
-    #     - sql: event_label = 'negative'
-
     - name: wayfinding_survey_rating
       title: Wayfinding Rating %
       type: number
-      sql: "safe_divide({wayfinding_survey_positive}, {wayfinding_survey_votes}) * 100"
+      #sql: "({wayfinding_survey_positive}, {wayfinding_survey_votes}) * 100"
+      sql: "COALESCE(100.0 * {wayfinding_survey_positive} / NULLIF({wayfinding_survey_votes}, 0), 0)"
+
       meta:
         suffix: ' %'
 
     - name: wayfinding_tour_user_share
       title: User Share %
       type: number
-      sql: "safe_divide({wayfinding_directions_users}, {tour_users}) * 100"
+      #sql: "({wayfinding_directions_users}, {tour_users}) * 100"
+      sql: "COALESCE(100.0 * {wayfinding_directions_users} / NULLIF({tour_users}, 0), 0)"
       meta:
         suffix: ' %'
 
     - name: wayfinding_track_user_share
       title: Wayfinding Track %
       type: number
-      sql: "safe_divide({wayfinding_directions_users}, {track_play_users}) * 100"
+      #sql: "({wayfinding_directions_users}, {track_play_users}) * 100"
+      sql: "COALESCE(100.0 * {wayfinding_directions_users} / NULLIF({track_play_users}, 0), 0)"
       meta:
         suffix: ' %'
 
@@ -366,7 +364,8 @@ cubes:
     - name: numpad_hits_per_user
       title: Avg Numpad Searhes
       type: number
-      sql: "safe_divide({numpad_hit}, {numpad_hit_users})"
+      sql: "COALESCE(CAST({numpad_hit} AS DOUBLE) / NULLIF(CAST({numpad_hit_users} AS DOUBLE), 0.0), 0.0)"
+      #sql: "({numpad_hit}, {numpad_hit_users})"
 
   joins:
     - name: venue_lookup_tracks
@@ -386,30 +385,42 @@ cubes:
       sql: "{CUBE.device_language} = {venue_lookup_language.device_language}"
 
   
-#   pre_aggregations:
-#     - name: media_player_aggregation
-#       measures:
-#         - venue_dataform_tracks.track_plays
-#         - venue_dataform_tracks.track_play_users
-#         - venue_dataform_tracks.track_complete
-#         - venue_dataform_tracks.track_completion_rate
-#         - venue_dataform_tracks.track_complete_users
-#         - venue_dataform_tracks.track_listen_time
-#         - venue_dataform_tracks.listen_time_minutes
-#         - venue_dataform_tracks.tour_views
-#         - venue_dataform_tracks.tour_users
-#       dimensions:
-#         - venue_dataform_tracks.device_platform
-#         - venue_dataform_tracks.user_connectivity
-#         - venue_dataform_tracks.venue_id
-#         - venue_dataform_tracks.track_id
-#         - venue_dataform_tracks.tour_id
-#         - venue_dataform_tracks.track_language
-#         - venue_dataform_tracks.country
-#         - venue_dataform_tracks.user_age_range
-#         - venue_dataform_tracks.user_gender
-#         - venue_lookup_tracks.track_name
-#         - venue_lookup_tours.tour_name
-#         - venue_lookup_language.language_name
-#       timeDimension: venue_dataform_tracks.event_date
-#       granularity: day
+  pre_aggregations:
+    - name: media_player_aggregation
+      measures:
+        - venue_dataform_tracks.tour_views
+        - venue_dataform_tracks.tour_users
+        - venue_dataform_tracks.track_plays
+        - venue_dataform_tracks.track_play_users
+        - venue_dataform_tracks.track_play_5s
+        - venue_dataform_tracks.track_pseudo_complete
+        - venue_dataform_tracks.track_listen_time
+        - venue_dataform_tracks.wayfinding_directions
+        - venue_dataform_tracks.wayfinding_directions_users
+        - venue_dataform_tracks.wayfinding_route_current
+        - venue_dataform_tracks.wayfinding_route_next
+        - venue_dataform_tracks.wayfinding_floor_plan
+        - venue_dataform_tracks.wayfinding_survey_votes
+        - venue_dataform_tracks.wayfinding_survey_positive
+        - venue_dataform_tracks.numpad_hit
+        - venue_dataform_tracks.numpad_hit_users
+      dimensions:
+        - venue_dataform_tracks.datetime
+        - venue_dataform_tracks.venue_id
+        - venue_dataform_tracks.device_platform
+        - venue_dataform_tracks.country
+        - venue_dataform_tracks.user_connectivity
+        - venue_dataform_tracks.user_age_range
+        - venue_dataform_tracks.user_gender
+        - venue_dataform_tracks.tour_id
+        - venue_dataform_tracks.tour_type
+        - venue_dataform_tracks.track_id
+        - venue_dataform_tracks.track_language
+        - venue_dataform_tracks.event_label
+        - venue_dataform_tracks.wayfinding_survey_label
+        - venue_lookup_tracks.track_name
+        - venue_lookup_tracks_nump.track_name
+        - venue_lookup_tours.tour_name
+        - venue_lookup_language.language_name
+      timeDimension: venue_dataform_tracks.datetime
+      granularity: day

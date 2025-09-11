@@ -5,12 +5,12 @@ cubes:
     SELECT 
       banner_id
       ,banner_label
-      ,organisation_id
+      --,organisation_id
       ,banner_type
-      ,banner_action_type
-      ,banner_action_sid
-      ,banner_action_url
-      ,banner_status
+      --,banner_action_type
+      --,banner_action_sid
+      --,banner_action_url
+      --,banner_status
     FROM `smartify-cc94e.smartify_lookup_tables.banner_lookup`
   
   dimensions:
@@ -28,18 +28,18 @@ cubes:
       type: string
       sql: banner_type
     
-    - name: banner_action_type
-      type: string
-      sql: banner_action_type
+    # - name: banner_action_type
+    #   type: string
+    #   sql: banner_action_type
     
-    - name: banner_action_sid
-      type: string
-      sql: banner_action_sid
+    # - name: banner_action_sid
+    #   type: string
+    #   sql: banner_action_sid
     
-    - name: banner_action_url
-      type: string
-      sql: banner_action_url
+    # - name: banner_action_url
+    #   type: string
+    #   sql: banner_action_url
     
-    - name: banner_status
-      type: string
-      sql: banner_status
+    # - name: banner_status
+    #   type: string
+    #   sql: banner_status

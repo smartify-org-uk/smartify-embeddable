@@ -9,9 +9,10 @@ export default defineConfig({
   audienceUrl: 'https://auth.eu.embeddable.com',
   authDomain: 'auth.eu.embeddable.com',
   authClientId: '6OGPwIQsVmtrBKhNrwAaXhz4ePb0kBGV',
-
+  
   pushModels: true,
   pushComponents: false,
+  region: 'EU'
   
   //
   // For internal use only
