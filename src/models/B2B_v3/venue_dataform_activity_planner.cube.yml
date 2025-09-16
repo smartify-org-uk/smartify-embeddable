@@ -50,7 +50,7 @@ cubes:
     and event_date >= '2025-07-01'
     --and event_name != "view_component"
     and event_name in ('view_component','select_component','page_view','click_tab','screen_view','click_button','share')
-    and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+    and (stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553') or (stream_id = '4029517643' and event_params_custom.organisation_id = 'org_ukparliament'))
 
   dimensions:
     - name: datetime

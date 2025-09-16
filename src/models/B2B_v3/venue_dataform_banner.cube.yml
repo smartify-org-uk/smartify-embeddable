@@ -31,7 +31,7 @@ cubes:
             or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
         )
         and event_date >= '2025-03-28'
-        and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+        and (stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553') or (stream_id = '4029517643' and event_params_custom.organisation_id = 'org_ukparliament'))
         and event_params_custom.banner_id is not null
         and event_name in ('select_component', 'view_component', 'click_button')
 

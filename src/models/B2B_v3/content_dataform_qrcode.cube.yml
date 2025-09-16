@@ -31,7 +31,7 @@ cubes:
     where event_params_custom.qrcode_id = '{COMPILE_CONTEXT.securityContext.qrcode_id}'
       and event_name = 'qrcode_open'
       and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
-      and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+      and (stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553') or (stream_id = '4029517643' and event_params_custom.organisation_id = 'org_ukparliament'))
   
   dimensions:
     - name: datetime

@@ -74,6 +74,11 @@
     venue_id:
       - venue_louvre
 
+- name: UK Parliament
+  securityContext:
+    organisation_id: org_ukparliament
+    venue_id:
+
 - name: QR Code
   securityContext:
     qrcode_id: qrcode_TBatDraOplpxrepUYK7Y
