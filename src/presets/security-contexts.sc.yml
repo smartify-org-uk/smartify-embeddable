@@ -74,6 +74,11 @@
     venue_id:
       - venue_louvre
 
+- name: Dresden Frauenkirche
+  securityContext:
+    organisation_id: org_dresdenfrauenkirche
+    venue_id:
+
 - name: UK Parliament
   securityContext:
     organisation_id: org_ukparliament
