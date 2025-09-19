@@ -78,11 +78,7 @@ cubes:
       - name: location_id
         type: string
         sql: location_id
-      
-      # - name: location_index
-      #   type: number
-      #   sql: location_index
-    
+
     measures:   
       - name: total_users
         type: count_distinct_approx
@@ -106,21 +102,21 @@ cubes:
         relationship: many_to_one
         sql: '{CUBE}.info_id = {venue_lookup_infopages.info_id}'
       
-    pre_aggregations:
-      - name: info_page_aggregation
-        measures:
-          - venue_dataform_infopages.total_users
-          - venue_dataform_infopages.info_views
-          - venue_dataform_infopages.click_tabs
-        dimensions:
-          - venue_dataform_infopages.datetime
-          - venue_dataform_infopages.venue_id
-          - venue_dataform_infopages.organisation_id
-          - venue_dataform_infopages.device_platform
-          - venue_dataform_infopages.user_connectivity
-          - venue_dataform_infopages.event_label
-          - venue_dataform_infopages.info_id
-          - venue_dataform_infopages.location_id
-          - venue_lookup_infopages.info_name
-        timeDimension: venue_dataform_infopages.datetime
-        granularity: day
+    # pre_aggregations:
+    #   - name: info_page_aggregation
+    #     measures:
+    #       - venue_dataform_infopages.total_users
+    #       - venue_dataform_infopages.info_views
+    #       - venue_dataform_infopages.click_tabs
+    #     dimensions:
+    #       - venue_dataform_infopages.datetime
+    #       - venue_dataform_infopages.venue_id
+    #       - venue_dataform_infopages.organisation_id
+    #       - venue_dataform_infopages.device_platform
+    #       - venue_dataform_infopages.user_connectivity
+    #       - venue_dataform_infopages.event_label
+    #       - venue_dataform_infopages.info_id
+    #       - venue_dataform_infopages.location_id
+    #       - venue_lookup_infopages.info_name
+    #     timeDimension: venue_dataform_infopages.datetime
+    #     granularity: day

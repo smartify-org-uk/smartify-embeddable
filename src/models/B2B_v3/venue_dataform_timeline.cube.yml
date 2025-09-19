@@ -36,10 +36,6 @@ cubes:
         type: time
         sql: event_timestamp
       
-      # - name: country
-      #   type: string
-      #   sql: geo_country  
-      
       - name: user_connectivity
         type: string
         sql: |-
@@ -112,7 +108,6 @@ cubes:
 
       - name: timeline_banner_ctr
         type: number
-        #sql: "({timeline_banner_clicks} / NULLIF({timeline_banner_impressions}, 0) * 100)"
         sql: "COALESCE(100.0 * {timeline_banner_clicks} / NULLIF({timeline_banner_impressions}, 0), 0)"
         meta:
           - suffix: '%'
@@ -149,26 +144,26 @@ cubes:
         relationship: many_to_one
         sql: '{CUBE}.timeline_event_id = {venue_lookup_timeline_period_item.timeline_event_id}'
     
-    pre_aggregations:
-      - name: timeline_aggregation
-        measures:
-          - venue_dataform_timelines.total_users
-          - venue_dataform_timelines.timeline_banner_clicks
-          - venue_dataform_timelines.timeline_banner_impressions
-          - venue_dataform_timelines.timeline_views
-          - venue_dataform_timelines.select_timeline_event
-          - venue_dataform_timelines.timeline_period_tab_click
-        dimensions:
-          - venue_dataform_timelines.event_date
-          - venue_dataform_timelines.venue_id
-          - venue_dataform_timelines.device_platform
-          - venue_dataform_timelines.user_connectivity
-          - venue_dataform_timelines.timeline_id
-          - venue_dataform_timelines.timeline_period_id
-          - venue_dataform_timelines.timeline_event_id
-          - venue_lookup_timeline_period_item.timeline_event_name
-          - venue_lookup_timeline_period.timeline_period_name
-          - venue_lookup_timeline.timeline_name
-          - venue_lookup_timeline.timeline_status
-        timeDimension: venue_dataform_timelines.event_date
-        granularity: day
+    # pre_aggregations:
+    #   - name: timeline_aggregation
+    #     measures:
+    #       - venue_dataform_timelines.total_users
+    #       - venue_dataform_timelines.timeline_banner_clicks
+    #       - venue_dataform_timelines.timeline_banner_impressions
+    #       - venue_dataform_timelines.timeline_views
+    #       - venue_dataform_timelines.select_timeline_event
+    #       - venue_dataform_timelines.timeline_period_tab_click
+    #     dimensions:
+    #       - venue_dataform_timelines.event_date
+    #       - venue_dataform_timelines.venue_id
+    #       - venue_dataform_timelines.device_platform
+    #       - venue_dataform_timelines.user_connectivity
+    #       - venue_dataform_timelines.timeline_id
+    #       - venue_dataform_timelines.timeline_period_id
+    #       - venue_dataform_timelines.timeline_event_id
+    #       - venue_lookup_timeline_period_item.timeline_event_name
+    #       - venue_lookup_timeline_period.timeline_period_name
+    #       - venue_lookup_timeline.timeline_name
+    #       - venue_lookup_timeline.timeline_status
+    #     timeDimension: venue_dataform_timelines.event_date
+    #     granularity: day

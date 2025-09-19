@@ -96,19 +96,19 @@ cubes:
         sql: event_name
         title: "QR Code Opens"
     
-    pre_aggregations:
-      - name: qrcode_aggregation
-        measures:
-          - venue_dataform_qrcodes.qrcode_users
-          - venue_dataform_qrcodes.qrcode_opens
-        dimensions:
-          - venue_dataform_qrcodes.datetime
-          - venue_dataform_qrcodes.venue_id
-          - venue_dataform_qrcodes.organisation_id
-          - venue_dataform_qrcodes.device_platform
-          - venue_dataform_qrcodes.user_connectivity
-          - venue_dataform_qrcodes.qrcode_label
-          - venue_dataform_qrcodes.qrcode_id
-          - venue_dataform_qrcodes.country
-        timeDimension: venue_dataform_qrcodes.datetime
-        granularity: day
+    # pre_aggregations:
+    #   - name: qrcode_aggregation
+    #     measures:
+    #       - venue_dataform_qrcodes.qrcode_users
+    #       - venue_dataform_qrcodes.qrcode_opens
+    #     dimensions:
+    #       - venue_dataform_qrcodes.datetime
+    #       - venue_dataform_qrcodes.venue_id
+    #       - venue_dataform_qrcodes.organisation_id
+    #       - venue_dataform_qrcodes.device_platform
+    #       - venue_dataform_qrcodes.user_connectivity
+    #       - venue_dataform_qrcodes.qrcode_label
+    #       - venue_dataform_qrcodes.qrcode_id
+    #       - venue_dataform_qrcodes.country
+    #     timeDimension: venue_dataform_qrcodes.datetime
+    #     granularity: day

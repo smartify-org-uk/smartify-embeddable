@@ -128,10 +128,6 @@ cubes:
     - name: visit_special_assistant
       type: string
       sql: visit_special_assistant
-    
-    # - name: event_label
-    #   type: string
-    #   sql: event_label
 
     - name: zone_id
       type: string
@@ -140,22 +136,6 @@ cubes:
       shown: true
 
   measures:
-    # - name: visit_planner_view
-    #   type: sum
-    #   sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/planner' then 1 else 0 end
-    
-    # - name: visit_interests_view
-    #   type: sum
-    #   sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/interests' then 1 else 0 end
-    
-    # - name: visit_duration_view
-    #   type: sum
-    #   sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and page_path = '/create-visit/duration' then 1 else 0 end
-    
-    # - name: visit_views
-    #   type: sum
-    #   sql: case when visit_id is not null and event_name in ('screen_view', 'page_view') and contains_substr(page_path, '/userVisits/usrvst_') then 1 else 0 end
-
     - name: visits_created
       type: count_distinct_approx
       sql: user_visit_id
@@ -169,11 +149,9 @@ cubes:
       title: Total Users
       sql: user_pseudo_id
 
-    # Visit Page Metrics
     - name: expand_group_card
       type: count
       title: Expand
-      #sql: case when event_name = 'expand_component' and component_type = 'activity_group_card' then 1 else 0 end
       sql: event_name
       filters:
         - sql: event_name = 'collapse_component'
@@ -212,35 +190,35 @@ cubes:
       relationship: many_to_one
       sql: 'if(contains_substr({CUBE.content_id}, "ak_"), {CUBE.content_id} = {venue_lookup_objects.object_sid}, {CUBE.content_id} = {venue_lookup_objects.object_sid})'
 
-  pre_aggregations:
-    - name: activity_planner_aggregation
-      measures:
-        - venue_dataform_activity_planner.visits_created
-        - venue_dataform_activity_planner.visit_users
-        - venue_dataform_activity_planner.active_user
-        - venue_dataform_activity_planner.expand_group_card
-        - venue_dataform_activity_planner.collapse_group_card
-        - venue_dataform_activity_planner.select_card
-        - venue_dataform_activity_planner.complete_content
+  # pre_aggregations:
+  #   - name: activity_planner_aggregation
+  #     measures:
+  #       - venue_dataform_activity_planner.visits_created
+  #       - venue_dataform_activity_planner.visit_users
+  #       - venue_dataform_activity_planner.active_user
+  #       - venue_dataform_activity_planner.expand_group_card
+  #       - venue_dataform_activity_planner.collapse_group_card
+  #       - venue_dataform_activity_planner.select_card
+  #       - venue_dataform_activity_planner.complete_content
         
-      dimensions:
-        - venue_dataform_activity_planner.datetime
-        - venue_dataform_activity_planner.device_platform
-        - venue_dataform_activity_planner.user_connectivity
-        - venue_dataform_activity_planner.device_language
-        - venue_dataform_activity_planner.organisation_id
-        - venue_dataform_activity_planner.venue_id
-        - venue_dataform_activity_planner.content_category
-        - venue_dataform_activity_planner.content_id
-        - venue_dataform_activity_planner.visit_id
-        - venue_dataform_activity_planner.user_visit_id
-        - venue_dataform_activity_planner.visit_date
-        - venue_dataform_activity_planner.visit_duration
-        - venue_dataform_activity_planner.visit_family_friendly
-        - venue_dataform_activity_planner.visit_special_assistant
-        - venue_dataform_activity_planner.zone_id
-        #- venue_lookup_objects.object_name
-        #- venue_lookup_artists.artist_name
-        #- venue_lookup_language.language_name
-      timeDimension: venue_dataform_activity_planner.datetime
-      granularity: day
+  #     dimensions:
+  #       - venue_dataform_activity_planner.datetime
+  #       - venue_dataform_activity_planner.device_platform
+  #       - venue_dataform_activity_planner.user_connectivity
+  #       - venue_dataform_activity_planner.device_language
+  #       - venue_dataform_activity_planner.organisation_id
+  #       - venue_dataform_activity_planner.venue_id
+  #       - venue_dataform_activity_planner.content_category
+  #       - venue_dataform_activity_planner.content_id
+  #       - venue_dataform_activity_planner.visit_id
+  #       - venue_dataform_activity_planner.user_visit_id
+  #       - venue_dataform_activity_planner.visit_date
+  #       - venue_dataform_activity_planner.visit_duration
+  #       - venue_dataform_activity_planner.visit_family_friendly
+  #       - venue_dataform_activity_planner.visit_special_assistant
+  #       - venue_dataform_activity_planner.zone_id
+  #       #- venue_lookup_objects.object_name
+  #       #- venue_lookup_artists.artist_name
+  #       #- venue_lookup_language.language_name
+  #     timeDimension: venue_dataform_activity_planner.datetime
+  #     granularity: day

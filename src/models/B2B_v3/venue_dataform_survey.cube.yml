@@ -125,21 +125,21 @@ cubes:
           - sql: lower(utm_content) = 'negative feedback tiles'
           - sql: event_name = 'inapp_click'
 
-    pre_aggregations:
-      - name: survey_aggregation
-        measures:
-          - venue_dataform_survey.nps_votes
-          - venue_dataform_survey.promoters
-          - venue_dataform_survey.detractors
-          - venue_dataform_survey.satisfaction_votes
-          - venue_dataform_survey.satisfaction_thumbsup
-          - venue_dataform_survey.satisfaction_thumbsdown
-        dimensions:
-          - venue_dataform_survey.datetime
-          - venue_dataform_survey.organisation_id
-          - venue_dataform_survey.venue_id
-          - venue_dataform_survey.satisfaction_vote_label
-          - venue_dataform_survey.negative_feedback_label
-          - venue_dataform_survey.negative_feedback_option
-        timeDimension: venue_dataform_survey.datetime
-        granularity: day
+    # pre_aggregations:
+    #   - name: survey_aggregation
+    #     measures:
+    #       - venue_dataform_survey.nps_votes
+    #       - venue_dataform_survey.promoters
+    #       - venue_dataform_survey.detractors
+    #       - venue_dataform_survey.satisfaction_votes
+    #       - venue_dataform_survey.satisfaction_thumbsup
+    #       - venue_dataform_survey.satisfaction_thumbsdown
+    #     dimensions:
+    #       - venue_dataform_survey.datetime
+    #       - venue_dataform_survey.organisation_id
+    #       - venue_dataform_survey.venue_id
+    #       - venue_dataform_survey.satisfaction_vote_label
+    #       - venue_dataform_survey.negative_feedback_label
+    #       - venue_dataform_survey.negative_feedback_option
+    #     timeDimension: venue_dataform_survey.datetime
+    #     granularity: day

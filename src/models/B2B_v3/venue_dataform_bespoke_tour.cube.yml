@@ -85,10 +85,6 @@ cubes:
       sql: tour_id
       primaryKey: true
       shown: true
-
-    # - name: tour_type
-    #   type: string
-    #   sql: case when STARTS_WITH(tour_id,"ptour_") then "Bespoke Tours" when STARTS_WITH(tour_id,"tour_") then "Venue Tours" else null end
     
     - name: track_id
       type: string
@@ -103,26 +99,8 @@ cubes:
     - name: track_language
       type: string
       sql: audio_language
-    
-    # - name: event_label
-    #   type: string
-    #   sql: event_label
   
   measures:
-    # - name: tour_views
-    #   type: count
-    #   sql: event_name
-    #   filters:
-    #     - sql: event_name in ('page_view', 'screen_view')
-    #     - sql: contains_substr(page_type, 'tour_dp')
-    
-    # - name: tour_users
-    #   type: count_distinct_approx
-    #   sql: user_pseudo_id
-    #   filters:
-    #     - sql: event_name in ('page_view', 'screen_view', 'track_start')
-    #     - sql: tour_id is not null
-
     - name: track_plays
       title: Plays
       type: count
@@ -130,25 +108,11 @@ cubes:
       filters:
         - sql: event_name in ('track_start')
 
-    # - name: track_complete
-    #   title: Completes
-    #   type: sum
-    #   sql: case when event_name in ('track_complete') then 1 else 0 end
-
     - name: track_play_users
       type: count_distinct_approx
       sql: user_pseudo_id
       filters:
         - sql: event_name in ('track_start')
-
-    # - name: track_complete_users
-    #   type: count_distinct_approx
-    #   sql: case when event_name in ('track_complete') then user_pseudo_id else null end
-
-    # - name: track_play_per_user
-    #   type: number
-    #   title: 'Track Play Per User'
-    #   sql: safe_divide({track_plays}, {track_play_users})
    
     - name: track_play_5s
       title: Track Plays 5s
@@ -213,46 +177,6 @@ cubes:
         - sql: event_name in ('page_view', 'screen_view')
         - sql: contains_substr(page_type, 'tour_dp')
         - sql: STARTS_WITH(tour_id,"ptour_")
-
-    # - name: ptour_track_plays
-    #   title: Bespoke Track Plays
-    #   type: count
-    #   sql: event_name
-    #   filters:
-    #     - sql: event_name in ('track_start')
-    #     - sql: STARTS_WITH(tour_id,"ptour_")
-    
-    # - name: ptour_track_complete
-    #   title: Bespoke Track Complete
-    #   type: count
-    #   filters:
-    #     - sql: event_name in ('track_complete')
-    #     - sql: STARTS_WITH(tour_id,"ptour_")
-
-    # - name: bespoke_page_language
-    #   title: Bespoke Language
-    #   type: sum
-    #   sql: case when event_name in ('page_view','screen_view') and contains_substr(page_path, "/create-tour/language") then 1 else 0 end
-
-    # - name: bespoke_page_topics
-    #   title: Bespoke Topics
-    #   type: sum
-    #   sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/tiles" then 1 else 0 end
-
-    # - name: bespoke_page_stops
-    #   title: Bespoke Stops
-    #   type: sum
-    #   sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/stops" then 1 else 0 end
-
-    # - name: bespoke_page_duration
-    #   title: Bespoke Duration
-    #   type: sum
-    #   sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/duration" then 1 else 0 end
-
-    # - name: bespoke_page_save
-    #   title: Bespoke Save Tour
-    #   type: sum
-    #   sql: case when event_name in ('page_view','screen_view') and page_path = "/create-tour/save-tour" then 1 else 0 end
   
   joins:
     - name: venue_lookup_tracks
@@ -268,27 +192,27 @@ cubes:
       sql: '{CUBE.experience_id} = {venue_lookup_experiences.experience_id}'
 
   
-  pre_aggregations:
-    - name: media_player_aggregation
-      measures:
-        - venue_dataform_bespoke_tour.track_plays
-        - venue_dataform_bespoke_tour.track_play_users
-        - venue_dataform_bespoke_tour.track_play_5s
-        - venue_dataform_bespoke_tour.track_pseudo_complete
-        - venue_dataform_bespoke_tour.ptour_created
-        - venue_dataform_bespoke_tour.ptour_users
-        - venue_dataform_bespoke_tour.ptour_views
-      dimensions:
-        - venue_dataform_bespoke_tour.datetime
-        - venue_dataform_bespoke_tour.device_platform
-        - venue_dataform_bespoke_tour.user_connectivity
-        - venue_dataform_bespoke_tour.venue_id
-        - venue_dataform_bespoke_tour.organisation_id
-        - venue_dataform_bespoke_tour.track_id
-        - venue_dataform_bespoke_tour.tour_id
-        - venue_dataform_bespoke_tour.track_language
-        - venue_dataform_bespoke_tour.experience_id
-        - venue_lookup_tracks.track_name
-        - venue_lookup_tours.tour_name
-      timeDimension: venue_dataform_bespoke_tour.datetime
-      granularity: day
+  # pre_aggregations:
+  #   - name: media_player_aggregation
+  #     measures:
+  #       - venue_dataform_bespoke_tour.track_plays
+  #       - venue_dataform_bespoke_tour.track_play_users
+  #       - venue_dataform_bespoke_tour.track_play_5s
+  #       - venue_dataform_bespoke_tour.track_pseudo_complete
+  #       - venue_dataform_bespoke_tour.ptour_created
+  #       - venue_dataform_bespoke_tour.ptour_users
+  #       - venue_dataform_bespoke_tour.ptour_views
+  #     dimensions:
+  #       - venue_dataform_bespoke_tour.datetime
+  #       - venue_dataform_bespoke_tour.device_platform
+  #       - venue_dataform_bespoke_tour.user_connectivity
+  #       - venue_dataform_bespoke_tour.venue_id
+  #       - venue_dataform_bespoke_tour.organisation_id
+  #       - venue_dataform_bespoke_tour.track_id
+  #       - venue_dataform_bespoke_tour.tour_id
+  #       - venue_dataform_bespoke_tour.track_language
+  #       - venue_dataform_bespoke_tour.experience_id
+  #       - venue_lookup_tracks.track_name
+  #       - venue_lookup_tours.tour_name
+  #     timeDimension: venue_dataform_bespoke_tour.datetime
+  #     granularity: day

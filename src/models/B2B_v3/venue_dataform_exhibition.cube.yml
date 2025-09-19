@@ -120,21 +120,21 @@ cubes:
         relationship: many_to_one
         sql: "{CUBE.exhibition_id} = {venue_lookup_exhibitions.exhibition_sid}"
 
-    pre_aggregations:
-      - name: exhibition_aggregation
-        measures:
-          - venue_dataform_exhibition.exhibition_users
-          - venue_dataform_exhibition.exhibition_views
-          - venue_dataform_exhibition.exhibition_clicks
-          - venue_dataform_exhibition.exhibition_favorites
-        dimensions:
-          - venue_dataform_exhibition.datetime
-          - venue_dataform_exhibition.device_platform
-          - venue_dataform_exhibition.user_connectivity
-          - venue_dataform_exhibition.venue_id
-          - venue_dataform_exhibition.exhibition_id
-          - venue_lookup_exhibitions.exhibition_name
-          - venue_lookup_exhibitions.exhibition_start
-          - venue_lookup_exhibitions.exhibition_end
-        timeDimension: venue_dataform_exhibition.datetime
-        granularity: day
+    # pre_aggregations:
+    #   - name: exhibition_aggregation
+    #     measures:
+    #       - venue_dataform_exhibition.exhibition_users
+    #       - venue_dataform_exhibition.exhibition_views
+    #       - venue_dataform_exhibition.exhibition_clicks
+    #       - venue_dataform_exhibition.exhibition_favorites
+    #     dimensions:
+    #       - venue_dataform_exhibition.datetime
+    #       - venue_dataform_exhibition.device_platform
+    #       - venue_dataform_exhibition.user_connectivity
+    #       - venue_dataform_exhibition.venue_id
+    #       - venue_dataform_exhibition.exhibition_id
+    #       - venue_lookup_exhibitions.exhibition_name
+    #       - venue_lookup_exhibitions.exhibition_start
+    #       - venue_lookup_exhibitions.exhibition_end
+    #     timeDimension: venue_dataform_exhibition.datetime
+    #     granularity: day

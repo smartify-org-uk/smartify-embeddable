@@ -131,14 +131,13 @@ cubes:
         type: number
         title: "CTR"
         sql: "COALESCE(100.0 * {banner_clicks} / NULLIF({banner_impressions}, 0), 0)"
-        #sql: "safe_divide({banner_clicks}, {banner_impressions}) * 100"
         meta:
           suffix: '%'
 
       - name: banner_impressions_per_user
         type: number
         title: "Impressions per User"
-        sql: "COALESCE(CAST({banner_impressions} AS DOUBLE) / NULLIF(CAST({active_users} AS DOUBLE), 0.0), 0.0)"
+        sql: "COALESCE(CAST({banner_impressions} AS FLOAT64) / NULLIF(CAST({active_users} AS FLOAT64), 0.0), 0.0)"
 
     joins:
       - name: venue_lookup_banners
@@ -149,24 +148,24 @@ cubes:
         relationship: many_to_one
         sql: '{CUBE.banner_item_id} = {venue_lookup_banner_slides.banner_slide_id}'
     
-    pre_aggregations:
-      - name: banners_aggregation
-        measures:
-          - venue_dataform_banner.active_users
-          - venue_dataform_banner.banner_impressions
-          - venue_dataform_banner.banner_clicks
-        dimensions:
-          - venue_dataform_banner.datetime
-          - venue_dataform_banner.banner_id
-          - venue_dataform_banner.banner_item_id
-          - venue_dataform_banner.component_type
-          - venue_dataform_banner.location_id_prefix
-          - venue_dataform_banner.device_platform
-          - venue_dataform_banner.user_connectivity
-          - venue_dataform_banner.banner_action
-          - venue_lookup_banners.banner_label
-          - venue_lookup_banners.banner_type
-          - venue_lookup_banner_slides.banner_slide_type
-          - venue_lookup_banner_slides.banner_slide_id
-        timeDimension: venue_dataform_banner.datetime
-        granularity: day
+    # pre_aggregations:
+    #   - name: banners_aggregation
+    #     measures:
+    #       - venue_dataform_banner.active_users
+    #       - venue_dataform_banner.banner_impressions
+    #       - venue_dataform_banner.banner_clicks
+    #     dimensions:
+    #       - venue_dataform_banner.datetime
+    #       - venue_dataform_banner.banner_id
+    #       - venue_dataform_banner.banner_item_id
+    #       - venue_dataform_banner.component_type
+    #       - venue_dataform_banner.location_id_prefix
+    #       - venue_dataform_banner.device_platform
+    #       - venue_dataform_banner.user_connectivity
+    #       - venue_dataform_banner.banner_action
+    #       - venue_lookup_banners.banner_label
+    #       - venue_lookup_banners.banner_type
+    #       - venue_lookup_banner_slides.banner_slide_type
+    #       - venue_lookup_banner_slides.banner_slide_id
+    #     timeDimension: venue_dataform_banner.datetime
+    #     granularity: day

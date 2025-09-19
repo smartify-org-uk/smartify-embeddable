@@ -61,8 +61,6 @@ cubes:
     - name: venue_id
       type: string
       sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
-      #primaryKey: true
-      #shown: true
     
     - name: country
       type: string
@@ -86,18 +84,18 @@ cubes:
       sql: user_pseudo_id
       title: 'QR Code Users'
   
-  pre_aggregations:
-    - name: general_qrcode_aggregation
-      measures:
-        - content_dataform_qrcode.qrcode_open
-        - content_dataform_qrcode.qrcode_users
-      dimensions:
-        - content_dataform_qrcode.datetime
-        - content_dataform_qrcode.user_connectivity
-        - content_dataform_qrcode.device_platform
-        - content_dataform_qrcode.venue_id
-        - content_dataform_qrcode.country
-        - content_dataform_qrcode.qrcode_id
-        - content_dataform_qrcode.qrcode_label
-      timeDimension: content_dataform_qrcode.datetime
-      granularity: day
+  # pre_aggregations:
+  #   - name: general_qrcode_aggregation
+  #     measures:
+  #       - content_dataform_qrcode.qrcode_open
+  #       - content_dataform_qrcode.qrcode_users
+  #     dimensions:
+  #       - content_dataform_qrcode.datetime
+  #       - content_dataform_qrcode.user_connectivity
+  #       - content_dataform_qrcode.device_platform
+  #       - content_dataform_qrcode.venue_id
+  #       - content_dataform_qrcode.country
+  #       - content_dataform_qrcode.qrcode_id
+  #       - content_dataform_qrcode.qrcode_label
+  #     timeDimension: content_dataform_qrcode.datetime
+  #     granularity: day
