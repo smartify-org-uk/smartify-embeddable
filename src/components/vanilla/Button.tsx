@@ -8,21 +8,35 @@ type Props = {
   disabled?: boolean;
   onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   icon?: React.ReactNode;
-}
+  ariaLabel?: string;
+  className?: string;
+  style?: React.CSSProperties;
+};
 
-export default function Button({ buttonLabel, showSpinner, disabled, onClick, icon }: Props) {
+export default function Button({
+  buttonLabel,
+  showSpinner,
+  disabled,
+  onClick,
+  icon,
+  ariaLabel,
+  className,
+  style,
+}: Props) {
+  const baseClassName = `text-[${REGULAR_FONT_SIZE}] border border-gray-300 h-[50px] rounded-full py-[16px] px-[32px] flex gap-[8px] items-center justify-center disabled:opacity-[0.6] disabled:background-[#F3F3F4] disabled:cursor-not-allowed hover:border-[#A1A5AA] pressed:background-[#F3F3F4]`;
+  const combinedClassName = className ? `${baseClassName} ${className}` : baseClassName;
 
- return (
-  <button
-        disabled={disabled}
-        className={`text-[${REGULAR_FONT_SIZE}] border border-gray-300 h-[50px] rounded-full py-[16px] px-[32px] flex gap-[8px] items-center justify-center disabled:opacity-[0.6] disabled:background-[#F3F3F4] disabled:cursor-not-allowed hover:border-[#A1A5AA] pressed:background-[#F3F3F4]`}
-        onClick={onClick} type="button"
-        >
-        {showSpinner
-          ? <Spinner show className={"relative"} size={"20"}/>
-          : icon
-        }
-        {buttonLabel}
+  return (
+    <button
+      disabled={disabled}
+      className={combinedClassName}
+      onClick={onClick}
+      type="button"
+      aria-label={ariaLabel}
+      style={style}
+    >
+      {showSpinner ? <Spinner show className={"relative"} size={"20"} /> : icon}
+      {buttonLabel}
     </button>
   );
 }
