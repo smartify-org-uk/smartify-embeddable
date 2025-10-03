@@ -10,32 +10,19 @@ const sourceKeyInputs = createVariableRange().map((position) => ({
   name: `sourceKey${position}`,
   type: 'string' as const,
   label: `Source variable ${position} key`,
-  category: 'Variables',
+  category: 'Bindings',
 }));
 
 const targetKeyInputs = createVariableRange().map((position) => ({
   name: `targetKey${position}`,
   type: 'string' as const,
   label: `Target variable ${position} key`,
-  category: 'Variables',
+  category: 'Bindings',
 }));
 
 const targetEventProperties = createVariableRange().map((position) => ({
   name: `targetValue${position}`,
   type: 'string' as const,
-}));
-
-const sourceVariables = createVariableRange().map((position) => ({
-  name: `Source variable ${position}`,
-  type: 'string' as const,
-  inputs: [`sourceKey${position}`],
-}));
-
-const targetVariables = createVariableRange().map((position) => ({
-  name: `Target variable ${position}`,
-  type: 'string' as const,
-  inputs: [`targetKey${position}`],
-  events: [{ name: 'onCopied', property: `targetValue${position}` }],
 }));
 
 export const meta = {
@@ -88,7 +75,7 @@ export const meta = {
       ],
     },
   ],
-  variables: [...sourceVariables, ...targetVariables],
+  variables: [],
 } as const satisfies EmbeddedComponentMeta;
 
 export default defineComponent<Props, typeof meta>(Component, meta, {
