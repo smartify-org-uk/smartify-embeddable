@@ -31,15 +31,16 @@ cubes:
       ,user_properties.user_gender
     from `smartify-cc94e.superform_outputs_151371783.ga4_events`
     where event_params_custom.organisation_id = '{COMPILE_CONTEXT.securityContext.organisation_id}'
+      /*
       and ('{COMPILE_CONTEXT.securityContext.venue_id}' IS NULL
           or '{COMPILE_CONTEXT.securityContext.venue_id}' = ''
           or '{COMPILE_CONTEXT.securityContext.venue_id}' = 'undefined'
-          or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ','))
-      )
+          or event_params_custom.venue_id in unnest(split('{COMPILE_CONTEXT.securityContext.venue_id}', ',')))
+      */
       and (event_params_custom.organisation_id != 'org_smithsonian' or (event_params_custom.organisation_id = 'org_smithsonian' and not contains_substr(event_params_custom.venue_id, ',')))
       and event_date >= DATE_SUB(DATE_TRUNC(CURRENT_DATE(), MONTH), INTERVAL 13 MONTH)
       and event_name in ('page_view', 'screen_view', 'add_favorite', 'scan_recognition_hit','translate_text','play_description','translate_text')
-      and stream_id in ("1047860117","1047860114","1913717213","2817285551","10374153553")
+      and (stream_id in ('1047860117','1047860114','1913717213','2817285551','10374153553') or (stream_id = '4029517643' and event_params_custom.organisation_id = 'org_ukparliament'))
       and event_params_custom.object_id is not null
       and not contains_substr(event_params_custom.venue_id, ',')
 
@@ -221,17 +222,17 @@ cubes:
     - name: object_view_per_user
       type: number
       title: 'Object View Per User'
-      sql: "COALESCE(CAST({object_views} AS DOUBLE) / NULLIF(CAST({object_view_users} AS DOUBLE), 0.0), 0.0)"
+      sql: "COALESCE(CAST({object_views} AS FLOAT64) / NULLIF(CAST({object_view_users} AS FLOAT64), 0.0), 0.0)"
 
     - name: object_scan_per_user
       type: number
       title: 'Object Scan Per User'
-      sql: "COALESCE(CAST({object_scans} AS DOUBLE) / NULLIF(CAST({object_scan_users} AS DOUBLE), 0.0), 0.0)"
+      sql: "COALESCE(CAST({object_scans} AS FLOAT64) / NULLIF(CAST({object_scan_users} AS FLOAT64), 0.0), 0.0)"
 
     - name: object_favorite_per_user
       type: number
       title: 'Object Favorite Per User'
-      sql: "COALESCE(CAST({object_favorites} AS DOUBLE) / NULLIF(CAST({object_favorite_users} AS DOUBLE), 0.0), 0.0)"
+      sql: "COALESCE(CAST({object_favorites} AS FLOAT64) / NULLIF(CAST({object_favorite_users} AS FLOAT64), 0.0), 0.0)"
 
   joins:
     - name: venue_lookup_objects
@@ -244,34 +245,54 @@ cubes:
       relationship: many_to_one
       sql: '{CUBE.device_language} = {venue_lookup_language.device_language}'
 
-  pre_aggregations:
-    - name: object_aggregation
-      measures:
-        - venue_dataform_object.object_views
-        - venue_dataform_object.object_scans
-        - venue_dataform_object.object_favorites
-        - venue_dataform_object.total_translations
-        - venue_dataform_object.total_ditactions
-        - venue_dataform_object.object_users
-        - venue_dataform_object.object_view_users
-        - venue_dataform_object.object_scan_users
-        - venue_dataform_object.object_favorite_users
-        - venue_dataform_object.translation_users
-        - venue_dataform_object.ditaction_users
-      dimensions:
-        - venue_dataform_object.datetime
-        - venue_dataform_object.venue_id
-        - venue_dataform_object.device_platform
-        - venue_dataform_object.user_connectivity
-        - venue_dataform_object.user_age_range
-        - venue_dataform_object.user_gender
-        - venue_dataform_object.country
-        - venue_dataform_object.object_id
-        - venue_dataform_object.artist_id
-        - venue_dataform_object.translation_from_to
-        - venue_lookup_objects.object_name
-        - venue_lookup_objects.object_category
-        - venue_lookup_artists.artist_name
-        - venue_lookup_language.language_name
-      timeDimension: venue_dataform_object.datetime
-      granularity: day
+  # pre_aggregations:
+  #   - name: object_aggregation
+  #     measures:
+  #       - venue_dataform_object.object_views
+  #       - venue_dataform_object.object_scans
+  #       - venue_dataform_object.object_favorites
+  #       - venue_dataform_object.total_translations
+  #       - venue_dataform_object.total_ditactions
+  #       - venue_dataform_object.object_users
+  #       - venue_dataform_object.object_view_users
+  #       - venue_dataform_object.object_scan_users
+  #       - venue_dataform_object.object_favorite_users
+  #       - venue_dataform_object.translation_users
+  #       - venue_dataform_object.ditaction_users
+  #     dimensions:
+  #       - venue_dataform_object.datetime
+  #       - venue_dataform_object.venue_id
+  #       - venue_dataform_object.device_platform
+  #       - venue_dataform_object.user_connectivity
+  #       - venue_dataform_object.user_age_range
+  #       - venue_dataform_object.user_gender
+  #       - venue_dataform_object.country
+  #       - venue_dataform_object.object_id
+  #       - venue_dataform_object.artist_id
+  #       - venue_dataform_object.translation_from_to
+  #       - venue_lookup_objects.object_name
+  #       - venue_lookup_objects.object_category
+  #       - venue_lookup_artists.artist_name
+  #       - venue_lookup_language.language_name
+  #     indexes:
+  #       - name: by_organisation_day
+  #         columns:
+  #           - venue_dataform_object.organisation_id
+  #           - venue_dataform_object.venue_id
+  #           - venue_dataform_object.datetime
+  #       - name: by_platform_day
+  #         columns:
+  #           - venue_dataform_object.organisation_id
+  #           - venue_dataform_object.device_platform
+  #           - venue_dataform_object.datetime
+  #       - name: by_object_with_name
+  #         columns:
+  #           - venue_dataform_object.object_id
+  #           - venue_lookup_objects.object_name
+  #           - venue_dataform_object.datetime
+  #     timeDimension: venue_dataform_object.datetime
+  #     granularity: day
+  #     # partition_granularity: month
+  #     # refresh_key:
+  #     #   every: 1 day
+  #     #   sql: SELECT DATE(MAX(event_date)) FROM `smartify-cc94e.superform_outputs_151371783.ga4_events`

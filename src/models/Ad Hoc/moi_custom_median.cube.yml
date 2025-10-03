@@ -9,6 +9,15 @@ cubes:
         when contains_substr(page.path, '/manchester') then "venue_moimanchester"
         when contains_substr(page.path, '/moi-ny') then "venue_moiny"
         when contains_substr(page.path, '/copenhagen') then "venue_moicopenhagen"
+        when contains_substr(page.path, '/moi-denver') then 'venue_moidenver'
+        when contains_substr(page.path, '/moi-charlotte') then 'venue_moicharlotte'
+        when contains_substr(page.path, '/moi-minneapolis') then 'venue_moiminneapolis'
+        when contains_substr(page.path, '/moi-atlanta') then 'venue_moiatlanta'
+        when contains_substr(page.path, '/moi-las-vegas') then 'venue_moilasvegas'
+        when contains_substr(page.path, '/moi-st-louis') then 'venue_moistlouis'
+        when contains_substr(page.path, '/moi-cleveland') then 'venue_moicleveland'
+        when contains_substr(page.path, '/moi-seattle') then 'venue_moiseattle'
+        when contains_substr(page.path, '/moi-san-diego') then 'venue_moisandiego'
         else event_params_custom.venue_id
       end venue_id
       ,event_params_custom.organisation_id
@@ -22,7 +31,8 @@ cubes:
       and stream_id in ("1913717213")
       and event_params_custom.organisation_id = 'org_museumofillusions'
       --and event_name = 'track_start'
-      and contains_substr(event_name, 'track_')
+      --and contains_substr(event_name, 'track_')
+      and event_name in ('track_quartile_75','track_quartile_50','track_forward','track_pause','track_start_5s','track_resume','track_start','track_pseudo_complete','track_quartile_25','play_track_by_deeplink','track_complete','track_backward')
     group by 1,2,3,4
   
   dimensions:

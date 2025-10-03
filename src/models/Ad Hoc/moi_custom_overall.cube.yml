@@ -1,319 +1,300 @@
 cubes:
-- name: moi_custom_overall
-  data_source: default
-  sql: >
-    select
-      event_date
-      ,user_pseudo_id
-      ,concat(user_pseudo_id, event_date) as user_concat
-      ,user_id
-      ,is_active_user
-      ,event_params.engagement_time_msec
-      ,event_params.session_engaged
-      ,event_name
-      ,platform
-      ,device.category as device_category
-      ,device.language as device_language
-      ,device.web_info.hostname as hostname
-      ,geo.country as geo_country
-      ,geo.city as geo_city
-      ,stream_id
-      ,page.path
-      ,user_properties.user_age
-      ,user_properties.user_gender
-      ,ifnull(user_properties.user_logged, "false") as user_logged
-      ,collected_traffic_source.manual_content as utm_content
-      ,collected_traffic_source.manual_term as utm_term
-      ,event_params_custom.client_connectivity
-      ,event_params_custom.event_label
-      ,event_params_custom.component_type
-      ,event_params_custom.content_category
-      ,event_params_custom.page_type
-      ,event_params_custom.qrcode_id
-      ,case
-        when (contains_substr(page.path, '/manchester') or event_params_custom.qrcode_id = 'qrcode_8FH02ND0I44vdi8HGDNx') then "venue_moimanchester"
-        when (contains_substr(page.path, '/moi-ny') or event_params_custom.qrcode_id = 'qrcode_TH9l4y8RK6CJBbDJMyZF') then "venue_moiny"
-        when (contains_substr(page.path, '/copenhagen') or event_params_custom.qrcode_id = 'qrcode_Y40gNWTM1i9MWchQBCwL') then "venue_moicopenhagen"
-        when contains_substr(page.path, '/moi-denver') then 'venue_moidenver'
-        when contains_substr(page.path, '/moi-charlotte') then 'venue_moicharlotte'
-        when contains_substr(page.path, '/moi-minneapolis') then 'venue_moiminneapolis'
-        when contains_substr(page.path, '/moi-atlanta') then 'venue_moiatlanta'
-        when contains_substr(page.path, '/moi-las-vegas') then 'venue_moilasvegas'
-        when contains_substr(page.path, '/moi-st-louis') then 'venue_moistlouis'
-        when contains_substr(page.path, '/moi-cleveland') then 'venue_moicleveland'
-        when contains_substr(page.path, '/moi-seattle') then 'venue_moiseattle'
-        when contains_substr(page.path, '/moi-san-diego') then 'venue_moisandiego'
-        else event_params_custom.venue_id
-      end venue_id
-      ,event_params_custom.organisation_id
-      ,event_params_custom.object_id
-      ,event_params_custom.tour_id
-      ,"User Type" as user_type
-      ,case
-        when event_params_custom.track_listen_time_string = 'inf' then 0
-        else CAST(event_params_custom.track_listen_time_string AS NUMERIC)
-      END AS track_listen_time
-    from `smartify-cc94e.superform_outputs_151371783.ga4_events`
-    where event_date >= '2025-05-09'
-      and stream_id in ("1913717213")
-      and event_params_custom.organisation_id = 'org_museumofillusions'
-      and event_name != "view_component"
-  
-  dimensions:
-    - name: event_date
-      type: time
-      sql: timestamp(event_date)
+  - name: moi_custom_overall
+    data_source: default
+    sql: >
+      select
+        event_date
+        ,user_pseudo_id
+        ,concat(user_pseudo_id, event_date) as user_concat
+        ,event_name
+        ,device.language as device_language
+        ,geo.country as geo_country
+        ,stream_id
+        ,collected_traffic_source.manual_content as utm_content
+        ,collected_traffic_source.manual_term as utm_term
+        ,event_params_custom.client_connectivity
+        ,event_params_custom.event_label
+        ,event_params_custom.page_type
+        ,case
+          when (contains_substr(page.path, '/manchester') or event_params_custom.qrcode_id = 'qrcode_8FH02ND0I44vdi8HGDNx') then "venue_moimanchester"
+          when (contains_substr(page.path, '/moi-ny') or event_params_custom.qrcode_id = 'qrcode_TH9l4y8RK6CJBbDJMyZF') then "venue_moiny"
+          when (contains_substr(page.path, '/copenhagen') or event_params_custom.qrcode_id = 'qrcode_Y40gNWTM1i9MWchQBCwL') then "venue_moicopenhagen"
+          when contains_substr(page.path, '/moi-denver') then 'venue_moidenver'
+          when contains_substr(page.path, '/moi-charlotte') then 'venue_moicharlotte'
+          when contains_substr(page.path, '/moi-minneapolis') then 'venue_moiminneapolis'
+          when contains_substr(page.path, '/moi-atlanta') then 'venue_moiatlanta'
+          when contains_substr(page.path, '/moi-las-vegas') then 'venue_moilasvegas'
+          when contains_substr(page.path, '/moi-st-louis') then 'venue_moistlouis'
+          when contains_substr(page.path, '/moi-cleveland') then 'venue_moicleveland'
+          when contains_substr(page.path, '/moi-seattle') then 'venue_moiseattle'
+          when contains_substr(page.path, '/moi-san-diego') then 'venue_moisandiego'
+          else event_params_custom.venue_id
+        end venue_id
+        ,event_params_custom.organisation_id
+        ,event_params_custom.object_id
+        ,event_params_custom.tour_id
+        ,"User Type" as user_type
+        ,case
+          when event_params_custom.track_listen_time_string = 'inf' then 0
+          else CAST(event_params_custom.track_listen_time_string AS NUMERIC)
+        END AS track_listen_time
+      from `smartify-cc94e.superform_outputs_151371783.ga4_events`
+      where event_date >= '2025-05-09'
+        and stream_id in ("1913717213")
+        and event_params_custom.organisation_id = 'org_museumofillusions'
+        and event_name != "view_component"
     
-    - name: device_language
-      type: string
-      sql: device_language
-    
-    - name: user_concat
-      type: string
-      sql: user_concat
-      primaryKey: true
-      shown: false
-    
-    - name: country
-      type: string
-      sql: if(geo_country = "", "Unknown", geo_country)
+    dimensions:
+      - name: event_date
+        type: time
+        sql: timestamp(event_date)
+      
+      - name: device_language
+        type: string
+        sql: device_language
+      
+      - name: user_concat
+        type: string
+        sql: user_concat
+        primaryKey: true
+        shown: false
+      
+      - name: country
+        type: string
+        sql: if(geo_country = "", "Unknown", geo_country)
 
-    - name: city
-      type: string
-      sql: if(geo_city = "", "Unknown", geo_city)
-    
-    - name: organisation_id
-      type: string
-      sql: organisation_id
-      primaryKey: true
-      shown: true
-    
-    - name: venue_id
-      type: string
-      sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
-      primaryKey: true
-      shown: true
-    
-    - name: user_type
-      type: string
-      sql: user_type
-    
-    - name: user_connectivity
-      type: string
-      sql: case when (client_connectivity = '' or client_connectivity is null) then 'Unknown' when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi' else 'Cellular' end
+      - name: city
+        type: string
+        sql: if(geo_city = "", "Unknown", geo_city)
+      
+      - name: organisation_id
+        type: string
+        sql: organisation_id
+      
+      - name: venue_id
+        type: string
+        sql: case when (venue_id = "" or venue_id is null) then "No linked venue" else venue_id end
+      
+      - name: user_type
+        type: string
+        sql: user_type
 
-    #SURVEY DATA
-    - name: satisfaction_vote_label
-      type: string
-      sql: case when (utm_content = "Satisfaction Survey" and event_label = "Thumbs up") then "positive" when (utm_content = "Satisfaction Survey" and event_label = "Thumbs down") then "negative" end
-  
-    - name: nps_vote_label
-      type: string
-      sql: case when (utm_content = "Smilies NPS") then event_label else null end
-  
-    - name: negative_feedback_label
-      type: string
-      title: Negative Reason
-      sql: case when (utm_content = "Negative Feedback Tiles") then utm_term else null end
+      - name: tour_id
+        type: string
+        sql: tour_id
+      
+      - name: user_connectivity
+        type: string
+        sql: case when (client_connectivity = '' or client_connectivity is null) then 'Unknown' when client_connectivity in ('WIFI', 'Internet Corporate', 'Internet Highspeed') then 'Wi-Fi' else 'Cellular' end
+      
+      - name: device_language
+        type: string
+        sql: device_language
+
+      - name: satisfaction_vote_label
+        type: string
+        sql: case when (utm_content = "Satisfaction Survey" and event_label = "Thumbs up") then "positive" when (utm_content = "Satisfaction Survey" and event_label = "Thumbs down") then "negative" end
     
-    - name: negative_feedback_option
-      type: string
-      title: Option
-      sql: case when (utm_content = "Negative Feedback Tiles") then event_label else null end
-
-  measures:
-    - name: total_users
-      type: count_distinct_approx
-      sql: user_pseudo_id
-      title: "Unique Users"
+      - name: nps_vote_label
+        type: string
+        sql: case when (utm_content = "Smilies NPS") then event_label else null end
     
-    - name: nps_votes
-      type: sum
-      title: NPS Survey Votes
-      sql: case when (utm_content = "Smilies NPS" and event_name = "inapp_click") then 1 else 0 end
+      - name: negative_feedback_label
+        type: string
+        title: Negative Reason
+        sql: case when (utm_content = "Negative Feedback Tiles") then utm_term else null end
+      
+      - name: negative_feedback_option
+        type: string
+        title: Option
+        sql: case when (utm_content = "Negative Feedback Tiles") then event_label else null end
 
-    - name: promoters
-      type: sum
-      title: NPS Promoters
-      sql: case when (utm_content = "Smilies NPS" and event_label = "Very positive") then 1 else 0 end
-      #shown: false
-    
-    - name: passives
-      type: sum
-      title: NPS Neutrals
-      sql: case when (utm_content = "Smilies NPS" and event_label = "Positive") then 1 else 0 end
-      #shown: false
-    
-    - name: detractors
-      type: sum
-      title: NPS Detractors
-      sql: case when (utm_content = "Smilies NPS" and (event_label = "Negative" or event_label = "Very negative" or event_label = "Neutral")) then 1 else 0 end
-      #shown: false
-    
-    - name: nps_score_100
-      type: number
-      sql: "case when {nps_votes} = 0 then 0 else ((({promoters} - {detractors}) / {nps_votes}) * 100) end"
-      #shown: false
-    
-    - name: nps_score
-      type: number
-      title: NPS Score
-      sql: "case when {nps_score_100} = 0 then 0 else ({nps_score_100} + 100) / 20 end"
-       
-    - name: satisfaction_votes
-      type: sum
-      title: Satisfaction Votes
-      sql: case when (utm_content = "Satisfaction Survey" and event_name = "inapp_click") then 1 else 0 end
-    
-    - name: satisfaction_thumbsup
-      type: sum
-      title: Satisfaction Thumbs Up
-      sql: case when (utm_content = "Satisfaction Survey" and event_label = "Thumbs up") then 1 else 0 end
-      shown: false
+    measures:
+      - name: total_users
+        type: count_distinct_approx
+        sql: user_pseudo_id
+        title: "Unique Users"
+      
+      - name: nps_votes
+        type: count
+        title: NPS Survey Votes
+        sql: event_name
+        filters:
+          - sql: event_name = "inapp_click"
+          - sql: lower(utm_content) = "smilies nps"
 
-    - name: satisfaction_thumbsdown
-      type: sum
-      title: Satisfaction Thumbs Down
-      sql: case when (utm_content = "Satisfaction Survey" and event_label = "Thumbs down") then 1 else 0 end
-      shown: false
+      - name: promoters
+        type: count
+        title: NPS Promoters
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = "smilies nps"
+          - sql: lower(event_label) = "very positive"
 
-    - name: satisfaction_rate
-      type: number
-      title: Satisfaction Rate
-      sql: "case when {satisfaction_votes} = 0 then 0 else round({satisfaction_thumbsup}/{satisfaction_votes},3)*100 end"
+      - name: passives
+        type: count
+        title: NPS Neutrals
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = "smilies nps"
+          - sql: lower(event_label) = "positive"
+      
+      - name: detractors
+        type: count
+        title: NPS Detractors
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = "smilies nps"
+          - sql: lower(event_label) in ("negative", "very negative", "neutral")
+      
+      - name: nps_score_100
+        type: number
+        title: NPS Score (100)
+        sql: 100.0 * ({promoters} - {detractors}) / NULLIF({nps_votes}, 0)
+      
+      - name: nps_score
+        type: number
+        title: NPS Score
+        sql: COALESCE(({nps_score_100} + 100) / 20.0, 0)
 
-    - name: negative_feedback_votes
-      title: Negative Votes
-      type: sum
-      sql: case when (utm_content = "Negative Feedback Tiles" and event_name = 'inapp_click') then 1 else 0 end
+      - name: satisfaction_votes
+        type: count
+        title: Satisfaction Votes
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey' 
+          - sql: event_name = 'inapp_click'
+      
+      - name: satisfaction_thumbsup
+        type: count
+        title: Satisfaction Thumbs Up
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey' 
+          - sql: lower(event_label) = 'thumbs up'
+      
+      - name: satisfaction_thumbsdown
+        type: count
+        title: Satisfaction Thumbs Down
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'satisfaction survey'
+          - sql: lower(event_label) = 'thumbs down'
 
-    - name: object_scans
-      type: sum
-      sql: case when event_name in ("scan_recognition_hit") and object_id is not null then 1 when (event_name = "object_scan" and event_date <= "2023-05-05") and object_id is not null then 1 when (event_name = "artwork_recognised" and event_date <= "2022-11-11") and object_id is not null then 1 else 0 end
+      - name: satisfaction_rate
+        type: number
+        title: Satisfaction Rate
+        sql: "COALESCE(100.0 * {satisfaction_thumbsup} / NULLIF({satisfaction_votes}, 0), 0)"
 
-    - name: object_scans_users
-      type: count_distinct_approx
-      title: Object Scan Users
-      sql: case when event_name in ("scan_recognition_hit") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when (event_name = "object_scan" and event_date <= "2023-05-05") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when (event_name = "artwork_recognised" and event_date <= "2022-11-11") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
-    
-    - name: object_collection_views_users
-      type: count_distinct_approx
-      title: Collection View Users
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "venue_dp") then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: negative_feedback_votes
+        title: Negative Votes
+        type: count
+        sql: event_name
+        filters:
+          - sql: lower(utm_content) = 'negative feedback tiles'
+          - sql: event_name = 'inapp_click'
 
-    - name: object_views
-      type: sum
-      title: Total Object Views
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "object_dp") and object_id is not null then 1 else 0 end
+      - name: object_scans
+        type: count
+        title: 'Scans'
+        sql: event_name
+        filters:
+          - sql: event_name = 'scan_recognition_hit'
 
-    - name: object_views_users
-      type: count_distinct_approx
-      title: Object View Users
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "object_dp") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: object_scans_users
+        type: count_distinct_approx
+        title: Object Scan Users
+        sql: event_name
+        filters:
+          - sql: event_name = 'scan_recognition_hit'
+                        
+      - name: object_collection_views_users
+        type: count_distinct_approx
+        title: Collection View Users
+        sql: user_pseudo_id
+        filters:
+          - sql: event_name in ('page_view', 'screen_view')
+          - sql: contains_substr(page_type, 'venue_dp')
 
-    - name: tour_object_users
-      type: count_distinct_approx
-      title: Object/Tour View Users
-      sql: case when event_name in ('page_view', 'screen_view') and ((contains_substr(page_type, "object_dp") or contains_substr(page_type, "tour_dp") or contains_substr(page_type, "venue_dp"))) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) when event_name in ("scan_recognition_hit") and object_id is not null then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: object_views
+        type: count
+        title: Total Object Views
+        sql: event_name
+        filters:
+          - sql: event_name in ('page_view', 'screen_view')
+          - sql: contains_substr(page_type, 'object_dp')
 
-    - name: tour_views
-      type: sum
-      sql: case when event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") then 1 else 0 end
-    
-    - name: tour_view_users
-      type: count_distinct_approx
-      title: Tour View Users
-      sql: case when (event_name in ('page_view', 'screen_view') and contains_substr(page_type, "tour_dp") or event_name in ('track_start', 'track_complete', 'track_pause') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: object_views_users
+        type: count_distinct_approx
+        title: Object View Users
+        sql: user_pseudo_id
+        filters:
+          - sql: event_name in ('page_view', 'screen_view')
+          - sql: contains_substr(page_type, 'object_dp')
 
-    - name: tour_track_play
-      type: sum
-      title: Tour Track Plays
-      sql: case when (event_name in ('track_start') and tour_id is not null) then 1 else 0 end
-    
-    - name: tour_track_play_users
-      type: count_distinct_approx
-      title: Tour Play Users
-      sql: case when (event_name in ('track_start') and tour_id is not null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: tour_object_users
+        type: count_distinct_approx
+        title: Object/Tour View Users
+        sql: user_pseudo_id
+        filters:
+          - sql: event_name in ('page_view', 'screen_view', 'scan_recognition_hit')
+          - sql: (page_type in ('object_dp', 'tour_dp', 'venue_dp') or object_id is not null)
 
-    - name: object_track_play
-      type: sum
-      title: Object Track Plays
-      sql: case when (event_name in ('track_start') and tour_id is null) then 1 else 0 end
-    
-    - name: object_track_play_users
-      type: count_distinct_approx
-      title: Object Play Users
-      sql: case when (event_name in ('track_start') and tour_id is null) then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: tour_views
+        type: count
+        sql: event_name
+        filters:
+          - sql: event_name in ('page_view', 'screen_view')
+          - sql: contains_substr(page_type, 'tour_dp')
+      
+      - name: tour_view_users
+        type: count_distinct_approx
+        title: Tour View Users
+        sql: user_pseudo_id
+        filters:
+          - sql: event_name in ('page_view', 'screen_view')
+          - sql: contains_substr(page_type, 'tour_dp')
 
-    - name: track_plays
-      type: sum
-      sql: case when event_name in ('track_start') then 1 else 0 end
-    
-    - name: track_play_users
-      type: count_distinct_approx
-      title: Track Play Users
-      sql: case when event_name in ('track_start') then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
+      - name: track_plays
+        type: count
+        sql: event_name
+        filters:
+          - sql: event_name = 'track_start'
+      
+      - name: track_play_users
+        type: count_distinct_approx
+        title: Track Play Users
+        sql: user_pseudo_id
+        filters:
+          - sql: event_name = 'track_start'
 
-    - name: track_completes
-      type: sum
-      sql: case when event_name in ('track_complete') then 1 else 0 end
+      - name: track_completes
+        type: count
+        sql: event_name
+        filters:
+          - sql: event_name = 'track_complete'
 
-    - name: track_completion_rate
-      title: Completion Rate %
-      type: number
-      sql: "({track_completes} / NULLIF({track_plays}, 0) * 100)"
-
-    - name: track_plays_per_user
-      title: Track Play / User
-      type: number
-      sql: case when {track_play_users} = 0 then 0 else {track_plays} / {track_play_users} end
-    
-    - name: track_listen_time
-      title: Listen Time
-      type: sum
-      sql: track_listen_time
-    
-    - name: tour_track_listen_time
-      title: Listen Time
-      type: sum
-      sql: case when tour_id is not null then track_listen_time else 0 end
-    
-    - name: object_track_listen_time
-      title: Listen Time
-      type: sum
-      sql: case when tour_id is null then track_listen_time else 0 end
-
-    - name: listen_time_minutes
-      title: Listen Time (Min)
-      type: number
-      sql: "{track_listen_time}/60000"
-    
-    - name: tour_listen_time_minutes
-      title: Tour Listen Time (Min)
-      type: number
-      sql: "{tour_track_listen_time}/60000"
-    
-    - name: object_listen_time_minutes
-      title: Object Listen Time (Min)
-      type: number
-      sql: "{object_track_listen_time}/60000"
-
-    - name: listen_time_per_user
-      type: number
-      title: 'Avg User Listen Time'
-      sql: case when {track_play_users} = 0 then 0 else {listen_time_minutes} / {track_play_users} end
-    
-    - name: qrcode_users
-      type: count_distinct_approx
-      sql: case when event_name = 'qrcode_open' then if(stream_id = '10374153553', concat(user_pseudo_id,ifnull(user_id, '-null')), user_pseudo_id) else null end
-      title: "QR Code Users"
-
-    - name: qrcode_opens
-      type: sum
-      sql: case when event_name = 'qrcode_open' then 1 else 0 end
-      title: "QR Code Opens"
-  
-  joins:
-    - name: moi_notrack_audience
-      relationship: many_to_one
-      sql: '{CUBE.user_concat} = {moi_notrack_audience.user_concat}'
+      - name: track_plays_per_user
+        title: Track Play / User
+        type: number
+        sql: "COALESCE({track_plays} * 1.0 / NULLIF({track_play_users}, 0), 0)"      
+      
+      - name: track_listen_time
+        title: Listen Time
+        type: sum
+        sql: track_listen_time
+      
+      - name: listen_time_minutes
+        title: Listen Time (Min)
+        type: number
+        sql: "ROUND({track_listen_time}/60000)"
+      
+      - name: listen_time_per_user
+        type: number
+        title: 'Avg User Listen Time'
+        sql: "COALESCE({listen_time_minutes} * 1.0 / NULLIF({track_play_users}, 0), 0.0)"      
+        
+    joins:
+      - name: moi_notrack_audience
+        relationship: many_to_one
+        sql: '{CUBE.user_concat} = {moi_notrack_audience.user_concat}'

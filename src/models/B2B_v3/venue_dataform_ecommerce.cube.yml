@@ -38,7 +38,6 @@ cubes:
 
     - name: device_platform
       type: string
-      #sql: case when platform = 'IOS' then 'iOS' when platform = 'ANDROID' then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
       sql: case when (stream_id = "10374153553" or (stream_id = '1913717213' and mobile_brand_name = 'Smartify')) then 'Hardware' when platform = 'IOS' then 'iOS' when (platform = 'ANDROID' and stream_id != "10374153553") then 'Android' when (platform = 'WEB' and contains_substr(hostname, 'smartify.org') and hostname not in ('app.smartify.org','shop.smartify.org','ar.smartify.org','3d.smartify.org')) then 'Webapp' when (platform = 'WEB' and device_category in ('tablet','desktop')) then 'Desktop' else 'Webapp' end
       
     - name: user_connectivity

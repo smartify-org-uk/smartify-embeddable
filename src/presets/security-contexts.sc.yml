@@ -58,6 +58,11 @@
     organisation_id: org_hrp
     venue_id:
 
+- name: National Trust for Scotland
+  securityContext:
+    organisation_id: org_nts
+    venue_id:
+
 - name: Smithsonian
   securityContext:
     organisation_id: org_smithsonian
@@ -73,6 +78,16 @@
     organisation_id: org_louvre
     venue_id:
       - venue_louvre
+
+- name: Dresden Frauenkirche
+  securityContext:
+    organisation_id: org_dresdenfrauenkirche
+    venue_id:
+
+- name: UK Parliament
+  securityContext:
+    organisation_id: org_ukparliament
+    venue_id:
 
 - name: QR Code
   securityContext:
