@@ -413,5 +413,12 @@ cubes:
   #       - venue_lookup_tracks_nump.track_name
   #       - venue_lookup_tours.tour_name
   #       - venue_lookup_language.language_name
-  #     timeDimension: venue_dataform_tracks.datetime
+  #     time_dimension: venue_dataform_tracks.datetime
   #     granularity: day
+  #     partition_granularity: day
+  #     refresh_key:
+  #       every: 1 day
+  #       incremental: true
+  #       update_window: 1 day
+  #     build_range_start: TIMESTAMP_SUB(TIMESTAMP_TRUNC(CURRENT_TIMESTAMP(), MONTH), INTERVAL 13 MONTH)
+  #     build_range_end: TIMESTAMP_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 DAY)
