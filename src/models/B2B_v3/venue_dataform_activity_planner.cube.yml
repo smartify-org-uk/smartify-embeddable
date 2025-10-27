@@ -5,10 +5,8 @@ cubes:
       select
         event_date
         ,event_params_custom.event_custom_timestamp
-        ,case 
-          when is_measurement_protocol_hit = true then timestamp_seconds(event_params_custom.event_custom_timestamp) 
-          else timestamp_micros(time.event_timestamp)
-        end as event_timestamp
+        ,time.event_timestamp
+        --,if(event_params_custom.event_custom_timestamp is null, timestamp_micros(time.event_timestamp), timestamp_seconds(event_params_custom.event_custom_timestamp)) as event_timestamp
         ,user_pseudo_id
         ,user_id
         ,event_name
@@ -56,7 +54,7 @@ cubes:
     dimensions:
       - name: datetime
         type: time
-        sql: event_timestamp
+        sql: if(event_custom_timestamp is null, timestamp_micros(event_timestamp), timestamp_seconds(event_custom_timestamp))
           
       - name: user_connectivity
         type: string
